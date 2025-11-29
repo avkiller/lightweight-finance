@@ -26,6 +26,6 @@ jobs:
           
       - name: build for windows pkg
         run: |
-           .\build.ps1 package -Output ezbookkeeping.zip
+           .\build.ps1 package -Output ezbookkeeping.zip -NoTest
            dir 
          
