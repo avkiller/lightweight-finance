@@ -24,8 +24,8 @@ jobs:
           cache: true
           check-latest: true
           
-      - name: Run a multi-line script
+      - name: build for windows pkg
         run: |
-           .\build.bat package -o ezbookkeeping.zip
+           .\build.ps1 package -Output ezbookkeeping.zip
            dir 
          
