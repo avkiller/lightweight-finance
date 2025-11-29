@@ -47,7 +47,7 @@ jobs:
           }
 
           # 将信息写入环境变量
-          "LATEST_TAG=$LATEST_TAG" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "TAG_NAME=$LATEST_TAG" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           "VERSION=$VERSION" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Install Node.js
         uses: actions/setup-node@v4
