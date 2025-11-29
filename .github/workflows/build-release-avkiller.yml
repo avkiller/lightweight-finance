@@ -28,19 +28,6 @@ jobs:
           echo "ezbookkeeping_package_artifact_name_prefix=ezbookkeeping-build-release-package-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
           echo "ezbookkeeping_backend_artifact_name_prefix=ezbookkeeping-build-release-backend-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
 
-      - name: Rename docker bake meta file
-        run: |
-          mv "${{ steps.meta.outputs.bake-file }}" "${{ steps.variable.outputs.ezbookkeeping_docker_bake_meta_file_path }}"
-
-  build-linux-docker-and-package-x86:
-    runs-on: ubuntu-24.04
-    needs:
-      - setup
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-
   build-windows-backend:
     needs:
       - setup
