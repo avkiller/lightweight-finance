@@ -73,5 +73,5 @@ jobs:
           tag_name: ${{ env.TAG_NAME }}
           files: |
             ezbookkeeping.zip
-            ezbookkeeping.zip
+            ezbookkeeping.exe
          
