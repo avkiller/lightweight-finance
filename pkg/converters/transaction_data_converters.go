@@ -6,7 +6,7 @@ import (
 	"github.com/mayswind/ezbookkeeping/pkg/converters/camt"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/converter"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/datatable"
-	"github.com/mayswind/ezbookkeeping/pkg/converters/default"
+	_default "github.com/mayswind/ezbookkeeping/pkg/converters/default"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/dsv"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/feidee"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/fireflyIII"
@@ -15,6 +15,7 @@ import (
 	"github.com/mayswind/ezbookkeeping/pkg/converters/jdcom"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/mt"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/ofx"
+	"github.com/mayswind/ezbookkeeping/pkg/converters/qianji"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/qif"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/wechat"
 	"github.com/mayswind/ezbookkeeping/pkg/errs"
@@ -62,6 +63,8 @@ func GetTransactionDataImporter(fileType string) (converter.TransactionDataImpor
 		return fireflyIII.FireflyIIITransactionDataCsvFileImporter, nil
 	} else if fileType == "beancount" {
 		return beancount.BeancountTransactionDataImporter, nil
+	} else if fileType == "qianji_csv" {
+		return qianji.QianjiAppTransactionDataCsvFileImporter, nil
 	} else if fileType == "feidee_mymoney_csv" {
 		return feidee.FeideeMymoneyAppTransactionDataCsvFileImporter, nil
 	} else if fileType == "feidee_mymoney_xls" {
