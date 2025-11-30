@@ -20,11 +20,11 @@ const qianjiAppTransactionTimeColumnName = "时间"
 const qianjiAppTransactionTypeColumnName = "类型"
 const qianjiAppTransactionCategoryColumnName = "分类"
 const qianjiAppTransactionSubCategoryColumnName = "二级分类"
-const qianjiAppTransactionAccountNameColumnName = "账户"
+const qianjiAppTransactionAccountNameColumnName = "记账者"
 const qianjiAppTransactionAccountCurrencyColumnName = "币种"
 const qianjiAppTransactionAmountColumnName = "金额"
 const qianjiAppTransactionDescriptionColumnName = "备注"
-const qianjiAppTransactionMemberColumnName = "记账者"
+const qianjiAppTransactionRelatedIdColumnName = "关联账单"
 const qianjiAppTransactionTypeIncomeText = "收入"
 const qianjiAppTransactionTypeExpenseText = "支出"
 
@@ -37,7 +37,6 @@ var qianjiAppDataColumnNameMapping = map[datatable.TransactionDataTableColumn]st
 	datatable.TRANSACTION_DATA_TABLE_ACCOUNT_CURRENCY: qianjiAppTransactionAccountCurrencyColumnName,
 	datatable.TRANSACTION_DATA_TABLE_AMOUNT:           qianjiAppTransactionAmountColumnName,
 	datatable.TRANSACTION_DATA_TABLE_DESCRIPTION:      qianjiAppTransactionDescriptionColumnName,
-	datatable.TRANSACTION_DATA_TABLE_MEMBER:           qianjiAppTransactionMemberColumnName,
 }
 
 // qianjiAppTransactionDataCsvFileImporter defines the structure of feidee mymoney app csv importer for transaction data
@@ -45,7 +44,7 @@ type qianjiAppTransactionDataCsvFileImporter struct{}
 
 // Initialize a feidee mymoney app transaction data csv file importer singleton instance
 var (
-	QianjiAppTransactionDataCsvFileImporter = &qianjiAppTransactionDataCsvFileImporter{}
+	QianjiTransactionDataCsvFileImporter = &qianjiAppTransactionDataCsvFileImporter{}
 )
 
 // ParseImportedData returns the imported data by parsing the feidee mymoney app transaction csv data
@@ -71,7 +70,8 @@ func (c *qianjiAppTransactionDataCsvFileImporter) ParseImportedData(ctx core.Con
 		!commonDataTable.HasColumn(qianjiAppTransactionTypeColumnName) ||
 		!commonDataTable.HasColumn(qianjiAppTransactionSubCategoryColumnName) ||
 		!commonDataTable.HasColumn(qianjiAppTransactionAccountNameColumnName) ||
-		!commonDataTable.HasColumn(qianjiAppTransactionAmountColumnName) {
+		!commonDataTable.HasColumn(qianjiAppTransactionAmountColumnName) ||
+		!commonDataTable.HasColumn(qianjiAppTransactionRelatedIdColumnName) {
 		log.Errorf(ctx, "[qianji_app_transaction_data_csv_file_importer.ParseImportedData] cannot parse import data, because missing essential columns in header row")
 		return nil, nil, nil, nil, nil, nil, errs.ErrMissingRequiredFieldInHeaderRow
 	}
@@ -88,7 +88,7 @@ func (c *qianjiAppTransactionDataCsvFileImporter) ParseImportedData(ctx core.Con
 }
 
 func (c *qianjiAppTransactionDataCsvFileImporter) createNewqianjiAppTransactionDataTable(ctx core.Context, commonDataTable datatable.CommonDataTable) (datatable.TransactionDataTable, error) {
-	newColumns := make([]datatable.TransactionDataTableColumn, 0, 11)
+	newColumns := make([]datatable.TransactionDataTableColumn, 0, 8)
 	newColumns = append(newColumns, datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TYPE)
 	newColumns = append(newColumns, datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TIME)
 
@@ -116,10 +116,6 @@ func (c *qianjiAppTransactionDataCsvFileImporter) createNewqianjiAppTransactionD
 		newColumns = append(newColumns, datatable.TRANSACTION_DATA_TABLE_DESCRIPTION)
 	}
 
-	if commonDataTable.HasColumn(qianjiAppTransactionMemberColumnName) {
-		newColumns = append(newColumns, datatable.TRANSACTION_DATA_TABLE_MEMBER)
-	}
-
 	transactionRowParser := createQianjiTransactionDataRowParser()
 	transactionDataTable := datatable.CreateNewWritableTransactionDataTableWithRowParser(newColumns, transactionRowParser)
 	transferTransactionsMap := make(map[string]map[datatable.TransactionDataTableColumn]string, 0)
@@ -135,7 +131,7 @@ func (c *qianjiAppTransactionDataCsvFileImporter) createNewqianjiAppTransactionD
 			return nil, errs.ErrFewerFieldsInDataRowThanInHeaderRow
 		}
 
-		data := make(map[datatable.TransactionDataTableColumn]string, 11)
+		data := make(map[datatable.TransactionDataTableColumn]string, 8)
 
 		for columnType, columnName := range qianjiAppDataColumnNameMapping {
 			if dataRow.HasData(columnName) {

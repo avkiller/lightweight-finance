@@ -64,7 +64,7 @@ func GetTransactionDataImporter(fileType string) (converter.TransactionDataImpor
 	} else if fileType == "beancount" {
 		return beancount.BeancountTransactionDataImporter, nil
 	} else if fileType == "qianji_csv" {
-		return qianji.QianjiAppTransactionDataCsvFileImporter, nil
+		return qianji.QianjiTransactionDataCsvFileImporter, nil
 	} else if fileType == "feidee_mymoney_csv" {
 		return feidee.FeideeMymoneyAppTransactionDataCsvFileImporter, nil
 	} else if fileType == "feidee_mymoney_xls" {

@@ -147,3 +147,17 @@ dist/
 
 # Roo Code
 .roo/
+
+# Debug Files
+public/*.html
+public/*.js
+public/*.json
+public/css/
+public/js/
+public/fonts/
+log/
+data/
+*debug*
+public/img/layers*.png
+public/img/marker*.png
+*.bak

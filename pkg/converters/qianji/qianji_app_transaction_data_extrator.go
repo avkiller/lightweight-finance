@@ -16,7 +16,6 @@ func createNewQianjiAppTransactionBasicDataTable(ctx core.Context, originalDataT
 
 	for iterator.HasNext() {
 		row := iterator.Next()
-
 		items := make([]string, row.ColumnCount())
 
 		for i := 0; i < row.ColumnCount(); i++ {
