@@ -1,0 +1,74 @@
+name: Build windows frontend Release for avkiller
+
+on:
+  workflow_dispatch:
+env:
+   TAG_NAME: "nightly"
+   VERSION: "1.2.0"
+
+jobs:
+  build-windows-pkg:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: get tag
+        run: |
+          if ($env:GITHUB_EVENT_NAME -eq "workflow_dispatch") {
+            # 获取所有 Tag（确保包含远程 Tag）
+            git fetch --tags
+            # 按版本号排序获取最新 Tag（兼容语义化版本）
+            $LATEST_TAG = git tag --sort=-v:refname | Select-Object -First 1
+            if (-not $LATEST_TAG) { $LATEST_TAG = "nightly" }
+
+            # 去掉 Tag 名称中的 'v' 前缀
+            if ($LATEST_TAG.StartsWith("v")) {
+                $VERSION = $LATEST_TAG.Substring(1)
+            } else {
+                  $VERSION = $LATEST_TAG
+            }
+          } else {
+            # 原有逻辑：从推送的 Tag 中提取版本号
+            $TAG_VERSION = $env:GITHUB_REF.Split('/')[-1]
+            if ($TAG_VERSION.StartsWith("v")) {
+                $VERSION = $TAG_VERSION.Substring(1)
+              } else {
+                  $VERSION = $TAG_VERSION
+            }
+          }
+
+          # 处理无 Tag 的情况（可选：报错或默认值）
+          if ([string]::IsNullOrEmpty($VERSION)) {
+            Write-Error "::error::No valid tag found!"
+              $VERSION = "0.0.0"
+          }
+
+          # 将信息写入环境变量
+          "TAG_NAME=$LATEST_TAG" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "VERSION=$VERSION" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.25'
+          cache: true
+          check-latest: true
+          
+      - name: build for windows pkg
+        shell: pwsh
+        run: |
+           .\build.ps1 frontend -NoTest
+           dir 
+           7z a -r -tzip -mx9 ezbookkeeping_frontend.zip dist\
+      - name: Publish Release
+        uses: softprops/action-gh-release@v1
+        with:
+          prerelease: false
+          name: ${{ env.TAG_NAME }}
+          tag_name: ${{ env.TAG_NAME }}
+          files: |
+            ezbookkeeping_frontend.zip
+         
