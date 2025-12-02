@@ -279,7 +279,7 @@ export const SUPPORTED_IMPORT_FILE_CATEGORY_AND_TYPES: ImportFileCategoryAndType
             },
             {
                 type: 'qianji_csv',
-                name: 'qianji APP Data Export File',
+                name: 'Qianji APP Data Export File',
                 extensions: '.csv'
             },
             {
