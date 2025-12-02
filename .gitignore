@@ -157,6 +157,7 @@ public/js/
 public/fonts/
 log/
 data/
+dubug/
 *debug*
 public/img/layers*.png
 public/img/marker*.png
