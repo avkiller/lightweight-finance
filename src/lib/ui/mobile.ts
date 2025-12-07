@@ -50,6 +50,16 @@ export function hideLoading(): void {
     });
 }
 
+export function closePopover(selector: string): void {
+    f7ready((f7) => {
+        const popover = f7.popover.get(selector);
+
+        if (popover) {
+            popover.close();
+        }
+    });
+}
+
 export function closeAllDialog(): void {
     f7ready((f7) => {
         return f7.dialog.close();
@@ -138,7 +148,7 @@ export function getElementBoundingRect(selector: string): DOMRect | null {
     return el.getBoundingClientRect();
 }
 
-export function scrollToSelectedItem(parentEl: Framework7Dom, containerSelector: string, selectedItemSelector: string): void {
+export function scrollToSelectedItem(parentEl: Framework7Dom, containerSelector: string, selectedItemSelector: string, hasBottomToolbar?: boolean): void {
     if (!parentEl || !parentEl.length) {
         return;
     }
@@ -173,6 +183,11 @@ export function scrollToSelectedItem(parentEl: Framework7Dom, containerSelector:
 
     if (targetPos <= 0) {
         return;
+    }
+
+    if (hasBottomToolbar) {
+        const toolbarHeight = parentEl.find('.toolbar.toolbar-bottom').outerHeight() || 0;
+        targetPos += toolbarHeight / 2;
     }
 
     container.scrollTop(targetPos);

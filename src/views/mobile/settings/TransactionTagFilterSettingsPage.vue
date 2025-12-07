@@ -3,9 +3,9 @@
         <f7-navbar>
             <f7-nav-left :back-link="tt('Back')"></f7-nav-left>
             <f7-nav-title :title="tt(title)"></f7-nav-title>
-            <f7-nav-right>
+            <f7-nav-right class="navbar-compact-icons">
                 <f7-link icon-f7="ellipsis" :class="{ 'disabled': !hasAnyAvailableTag }" @click="showMoreActionSheet = true"></f7-link>
-                <f7-link :text="tt(applyText)" :class="{ 'disabled': !hasAnyVisibleTag }" @click="save"></f7-link>
+                <f7-link icon-f7="checkmark_alt" :class="{ 'disabled': !hasAnyVisibleTag }" @click="save"></f7-link>
             </f7-nav-right>
         </f7-navbar>
 
@@ -101,10 +101,10 @@
             </f7-accordion-item>
         </f7-block>
 
-        <f7-popover class="tag-filter-state-popover-menu"
-                    v-model:opened="showTagFilterStatePopover">
+        <f7-popover class="tag-filter-state-popover-menu">
             <f7-list dividers>
-                <f7-list-item :title="state.displayName"
+                <f7-list-item link="#" no-chevron popover-close
+                              :title="state.displayName"
                               :class="{ 'list-item-selected': filterTagIds[currentTransactionTagId] === state.type }"
                               :key="state.type"
                               v-for="state in [
@@ -180,7 +180,6 @@ const {
     includeTagsCount,
     excludeTagsCount,
     title,
-    applyText,
     allTags,
     hasAnyAvailableTag,
     hasAnyVisibleTag,
@@ -192,7 +191,6 @@ const transactionTagsStore = useTransactionTagsStore();
 
 const loadingError = ref<unknown | null>(null);
 const currentTransactionTagId = ref<string>('');
-const showTagFilterStatePopover = ref<boolean>(false);
 const showMoreActionSheet = ref<boolean>(false);
 
 const collapseStates = ref<Record<string, CollapseState>>({
@@ -223,7 +221,6 @@ function init(): void {
 
 function updateCurrentTransactionTagState(state: number): void {
     filterTagIds.value[currentTransactionTagId.value] = state;
-    showTagFilterStatePopover.value = false;
     currentTransactionTagId.value = '';
 }
 
