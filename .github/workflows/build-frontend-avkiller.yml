@@ -54,7 +54,7 @@ jobs:
       - name: build for windows pkg
         shell: pwsh
         run: |
-           .\build.ps1 frontend -NoTest
+           .\build.ps1 frontend --no-lint --no-test
            dir 
            7z a -r -tzip -mx9 ezbookkeeping_frontend.zip dist\dist\
       - name: Publish Release
