@@ -3,6 +3,7 @@ package converter
 import (
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/mayswind/ezbookkeeping/pkg/converters/datatable"
 	"github.com/mayswind/ezbookkeeping/pkg/core"
@@ -29,21 +30,7 @@ type DataTableTransactionDataImporter struct {
 }
 
 // ParseImportedData returns the imported transaction data
-func (c *DataTableTransactionDataImporter) ParseImportedData(ctx core.Context,
-	user *models.User,
-	dataTable datatable.TransactionDataTable,
-	defaultTimezoneOffset int16,
-	additionalOptions TransactionDataImporterOptions,
-	accountMap map[string]*models.Account,
-	expenseCategoryMap map[string]map[string]*models.TransactionCategory,
-	incomeCategoryMap map[string]map[string]*models.TransactionCategory,
-	transferCategoryMap map[string]map[string]*models.TransactionCategory,
-	tagMap map[string]*models.TransactionTag) (models.ImportedTransactionSlice,
-	[]*models.Account,
-	[]*models.TransactionCategory,
-	[]*models.TransactionCategory,
-	[]*models.TransactionCategory,
-	[]*models.TransactionTag, error) {
+func (c *DataTableTransactionDataImporter) ParseImportedData(ctx core.Context, user *models.User, dataTable datatable.TransactionDataTable, defaultTimezone *time.Location, additionalOptions TransactionDataImporterOptions, accountMap map[string]*models.Account, expenseCategoryMap map[string]map[string]*models.TransactionCategory, incomeCategoryMap map[string]map[string]*models.TransactionCategory, transferCategoryMap map[string]map[string]*models.TransactionCategory, tagMap map[string]*models.TransactionTag) (models.ImportedTransactionSlice, []*models.Account, []*models.TransactionCategory, []*models.TransactionCategory, []*models.TransactionCategory, []*models.TransactionTag, error) {
 	if dataTable.TransactionRowCount() < 1 {
 		log.Errorf(ctx, "[data_table_transaction_data_importer.ParseImportedData] cannot parse import data for user \"uid:%d\", because data table row count is less 1", user.Uid)
 		return nil, nil, nil, nil, nil, nil, errs.ErrNotFoundTransactionDataInFile
@@ -107,7 +94,7 @@ func (c *DataTableTransactionDataImporter) ParseImportedData(ctx core.Context,
 			continue
 		}
 
-		timezoneOffset := defaultTimezoneOffset
+		timezone := defaultTimezone
 
 		if dataTable.HasColumn(datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TIMEZONE) &&
 			dataRow.GetData(datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TIMEZONE) != datatable.TRANSACTION_DATA_TABLE_TIMEZONE_NOT_AVAILABLE {
@@ -118,10 +105,10 @@ func (c *DataTableTransactionDataImporter) ParseImportedData(ctx core.Context,
 				return nil, nil, nil, nil, nil, nil, errs.ErrTransactionTimeZoneInvalid
 			}
 
-			timezoneOffset = utils.GetTimezoneOffsetMinutes(transactionTimezone)
+			timezone = transactionTimezone
 		}
 
-		transactionTime, err := utils.ParseFromLongDateTime(dataRow.GetData(datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TIME), timezoneOffset)
+		transactionTime, err := utils.ParseFromLongDateTimeInTimeZone(dataRow.GetData(datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TIME), timezone)
 
 		if err != nil {
 			log.Errorf(ctx, "[data_table_transaction_data_importer.ParseImportedData] cannot parse time \"%s\" in data row \"index:%d\" for user \"uid:%d\", because %s", dataRow.GetData(datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TIME), dataRowIndex, user.Uid, err.Error())
@@ -386,7 +373,7 @@ func (c *DataTableTransactionDataImporter) ParseImportedData(ctx core.Context,
 				Type:                 transactionDbType,
 				CategoryId:           categoryId,
 				TransactionTime:      utils.GetMinTransactionTimeFromUnixTime(transactionTime.Unix()),
-				TimezoneUtcOffset:    timezoneOffset,
+				TimezoneUtcOffset:    utils.GetTimezoneOffsetMinutes(transactionTime.Unix(), timezone),
 				AccountId:            account.AccountId,
 				Amount:               amount,
 				HideAmount:           false,
