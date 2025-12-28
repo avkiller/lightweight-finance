@@ -62,7 +62,7 @@ jobs:
           
       - name: build for windows pkg
         run: |
-           .\build.ps1 package -Output ezbookkeeping.zip --no-test --no-lint
+           .\build.ps1 package -Output ezbookkeeping.zip -NoLint -NoTest
            dir 
 
       - name: Publish Release
