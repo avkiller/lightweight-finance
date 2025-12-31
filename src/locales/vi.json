@@ -16,6 +16,7 @@
         "Dutch": "Tiếng Hà Lan",
         "Portuguese (Brazil)": "Tiếng Bồ Đào Nha (Brazil)",
         "Russian": "Tiếng Nga",
+        "Slovenian": "Tiếng Slovenia",
         "Thai": "Tiếng Thái",
         "Turkish": "Tiếng Thổ Nhĩ Kỳ",
         "Ukrainian": "Tiếng Ukraina",
@@ -96,10 +97,7 @@
             "hh_mm_a": "hh:mm A"
         },
         "yearQuarter": {
-            "q1": "Quý 1 năm {year}",
-            "q2": "Quý 2 năm {year}",
-            "q3": "Quý 3 năm {year}",
-            "q4": "Quý 4 năm {year}"
+            "content": "{quarter} năm {year}"
         },
         "fiscalYear": {
             "StartYYYY_EndYYYY": "FY {StartYYYY}-{EndYYYY}",
@@ -129,6 +127,7 @@
             "clickToSelectedFile": "Nhấp để chọn tệp nhập khẩu ({extensions})",
             "previewCount": "Preview Count: {count}",
             "selectedCount": "Đã chọn {count} trên {totalCount}",
+            "queryIndex": "Query #{index}",
             "youHaveUpdatedTransactions": "Bạn đã cập nhật {count} giao dịch",
             "confirmImportTransactions": "Bạn có chắc chắn muốn nhập {count} giao dịch không?",
             "importingTransactions": "Importing ({process}%)",
@@ -280,6 +279,12 @@
             "29": "Ngày 29",
             "30": "Ngày 30",
             "31": "Ngày 31"
+        },
+        "quarter": {
+            "q1": "Quý 1",
+            "q2": "Quý 2",
+            "q3": "Quý 3",
+            "q4": "Quý 4"
         }
     },
     "granularity": {
@@ -1552,6 +1557,13 @@
     "Bubble Chart": "Bubble Chart",
     "Candlestick Chart": "Candlestick Chart",
     "Sankey Chart": "Sankey Chart",
+    "Column Chart (Stacked)": "Column Chart (Stacked)",
+    "Column Chart (100% Stacked)": "Column Chart (100% Stacked)",
+    "Column Chart (Grouped)": "Column Chart (Grouped)",
+    "Line Chart (Grouped)": "Line Chart (Grouped)",
+    "Area Chart (Stacked)": "Area Chart (Stacked)",
+    "Area Chart (100% Stacked)": "Area Chart (100% Stacked)",
+    "Bubble Chart (Grouped)": "Bubble Chart (Grouped)",
     "Sort by": "Sắp xếp theo",
     "Map": "Bản đồ",
     "Provider": "Nhà cung cấp",
@@ -1706,6 +1718,25 @@
     "Editor": "Editor",
     "Expression": "Expression",
     "Failed to generate expression": "Failed to generate expression",
+    "Axis / Category": "Axis / Category",
+    "Series": "Series",
+    "Transaction Date": "Transaction Date",
+    "Transaction Year-Month": "Transaction Year-Month",
+    "Transaction Year-Quarter": "Transaction Year-Quarter",
+    "Transaction Year": "Transaction Year",
+    "Transaction Fiscal Year": "Transaction Fiscal Year",
+    "Transaction Day of Week": "Transaction Day of Week",
+    "Transaction Day of Month": "Transaction Day of Month",
+    "Transaction Month of Year": "Transaction Month of Year",
+    "Transaction Quarter of Year": "Transaction Quarter of Year",
+    "Source Account Category": "Source Account Category",
+    "Source Account Currency": "Source Account Currency",
+    "Destination Account Category": "Destination Account Category",
+    "Destination Account Currency": "Destination Account Currency",
+    "Value Metric": "Value Metric",
+    "Transaction Count": "Transaction Count",
+    "Average Amount": "Average Amount",
+    "Median Amount": "Median Amount",
     "Account List": "Danh sách tài khoản",
     "This Week": "Tuần này",
     "This Month": "Tháng này",

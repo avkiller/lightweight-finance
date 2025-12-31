@@ -16,6 +16,7 @@
         "Dutch": "Нідерландська",
         "Portuguese (Brazil)": "Португальська (Бразилія)",
         "Russian": "Російська",
+        "Slovenian": "Словенська",
         "Thai": "Тайська",
         "Turkish": "Турецька",
         "Ukrainian": "Українська",
@@ -96,10 +97,7 @@
             "hh_mm_a": "hh:mm A"
         },
         "yearQuarter": {
-            "q1": "1 квартал {year} р.",
-            "q2": "2 квартал {year} р.",
-            "q3": "3 квартал {year} р.",
-            "q4": "4 квартал {year} р."
+            "content": "{quarter} {year} р."
         },
         "fiscalYear": {
             "StartYYYY_EndYYYY": "{StartYYYY}-{EndYYYY} фінансовий рік",
@@ -129,6 +127,7 @@
             "clickToSelectedFile": "Натисніть, щоб вибрати файл для імпорту ({extensions})",
             "previewCount": "Preview Count: {count}",
             "selectedCount": "Вибрано {count} з {totalCount}",
+            "queryIndex": "Query #{index}",
             "youHaveUpdatedTransactions": "Ви оновили {count} транзакцій",
             "confirmImportTransactions": "Ви впевнені, що хочете імпортувати {count} транзакцій?",
             "importingTransactions": "Importing ({process}%)",
@@ -280,6 +279,12 @@
             "29": "29-й",
             "30": "30-й",
             "31": "31-й"
+        },
+        "quarter": {
+            "q1": "1 квартал",
+            "q2": "2 квартал",
+            "q3": "3 квартал",
+            "q4": "4 квартал"
         }
     },
     "granularity": {
@@ -1552,6 +1557,13 @@
     "Bubble Chart": "Bubble Chart",
     "Candlestick Chart": "Candlestick Chart",
     "Sankey Chart": "Sankey Chart",
+    "Column Chart (Stacked)": "Column Chart (Stacked)",
+    "Column Chart (100% Stacked)": "Column Chart (100% Stacked)",
+    "Column Chart (Grouped)": "Column Chart (Grouped)",
+    "Line Chart (Grouped)": "Line Chart (Grouped)",
+    "Area Chart (Stacked)": "Area Chart (Stacked)",
+    "Area Chart (100% Stacked)": "Area Chart (100% Stacked)",
+    "Bubble Chart (Grouped)": "Bubble Chart (Grouped)",
     "Sort by": "Сортувати за",
     "Map": "Карта",
     "Provider": "Провайдер",
@@ -1706,6 +1718,25 @@
     "Editor": "Editor",
     "Expression": "Expression",
     "Failed to generate expression": "Failed to generate expression",
+    "Axis / Category": "Axis / Category",
+    "Series": "Series",
+    "Transaction Date": "Transaction Date",
+    "Transaction Year-Month": "Transaction Year-Month",
+    "Transaction Year-Quarter": "Transaction Year-Quarter",
+    "Transaction Year": "Transaction Year",
+    "Transaction Fiscal Year": "Transaction Fiscal Year",
+    "Transaction Day of Week": "Transaction Day of Week",
+    "Transaction Day of Month": "Transaction Day of Month",
+    "Transaction Month of Year": "Transaction Month of Year",
+    "Transaction Quarter of Year": "Transaction Quarter of Year",
+    "Source Account Category": "Source Account Category",
+    "Source Account Currency": "Source Account Currency",
+    "Destination Account Category": "Destination Account Category",
+    "Destination Account Currency": "Destination Account Currency",
+    "Value Metric": "Value Metric",
+    "Transaction Count": "Transaction Count",
+    "Average Amount": "Average Amount",
+    "Median Amount": "Median Amount",
     "Account List": "Список рахунків",
     "This Week": "Цього тижня",
     "This Month": "Цього місяця",
