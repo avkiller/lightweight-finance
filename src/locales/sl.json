@@ -100,34 +100,34 @@
             "content": "{quarter} {year}"
         },
         "fiscalYear": {
-            "StartYYYY_EndYYYY": "PL {StartYYYY}-{EndYYYY}",
-            "StartYYYY_EndYY": "PL {StartYYYY}-{EndYY}",
-            "StartYY_EndYY": "PL {StartYY}-{EndYY}",
-            "EndYYYY": "PL {EndYYYY}",
-            "EndYY": "PL {EndYY}"
+            "StartYYYY_EndYYYY": "FL {StartYYYY}-{EndYYYY}",
+            "StartYYYY_EndYY": "FL {StartYYYY}-{EndYY}",
+            "StartYY_EndYY": "FL {StartYY}-{EndYY}",
+            "EndYYYY": "FL {EndYYYY}",
+            "EndYY": "FL {EndYY}"
         },
         "misc": {
             "nHour": "{n} ura",
             "nHours": "{n} ur",
             "nDay": "{n} dan",
-            "nDays": "{n} dni",
+            "nDays": "{n} dan",
             "multiTextJoinSeparator": ", ",
             "loginWithCustomProvider": "Prijavi se preko {name}",
-            "hoursBehindDefaultTimezone": "{hours} ura(ur) za privzetim časovnim pasov",
+            "hoursBehindDefaultTimezone": "{hours} ura(ur) za privzetim časovnim pasom",
             "hoursAheadOfDefaultTimezone": "{hours} ura(ur) po privzetem časovnem pasu",
-            "hoursMinutesBehindDefaultTimezone": "{hours} ura(ur) in {minutes} minut za privzetim časovnim pasov",
+            "hoursMinutesBehindDefaultTimezone": "{hours} ura(ur) in {minutes} minut za privzetim časovnim pasom",
             "hoursMinutesAheadOfDefaultTimezone": "{hours} ura(ur) in {minutes} minut po privzetem časovnem pasu",
-            "monthDay": "{ordinal} dab",
+            "monthDay": "{ordinal} dan",
             "eachMonthDayInMonthDays": "{ordinal}",
             "monthDays": "{multiMonthDays} dni",
-            "everyMultiDaysOfWeek": "Vsakih {days}",
-            "everyMultiDaysOfMonth": "Vsakih {days} v mesecu",
+            "everyMultiDaysOfWeek": "Vsak {days}",
+            "everyMultiDaysOfMonth": "Vsak {days} v mesecu",
             "youHaveAccounts": "Zabeležili ste {count} računov",
             "addNewTag": "Dodaj novo oznako \"{tag}\"",
             "clickToSelectedFile": "Kliknite za izbiro datoteke za uvoz ({extensions})",
             "previewCount": "Število predogledov: {count}",
             "selectedCount": "Izbranih {count} od {totalCount}",
-            "queryIndex": "Poizvedi #{index}",
+            "queryIndex": "Poizvedba #{index}",
             "youHaveUpdatedTransactions": "Posodobili ste {count} transakcij",
             "confirmImportTransactions": "Ali ste prepričani, da želite uvoziti {count} transakcij?",
             "importingTransactions": "Uvažam ({process}%)",
@@ -155,7 +155,7 @@
         "Buddhist": "Budistični",
         "Persian": "Perzijski",
         "Gregorian with Chinese Calendar": "Gregorijanski s kitajskim koledarjem",
-        "Gregorian with Persian Calendar": "Gregorijanski s prezijskim koledarjem"
+        "Gregorian with Persian Calendar": "Gregorijanski s perzijskim koledarjem"
     },
     "datetime": {
         "AM": {
@@ -2461,6 +2461,7 @@
     "Official Website": "Uradna spletna stran",
     "Report Issue": "Prijavi težavo",
     "Getting help": "Pomoč",
+    "Documentation": "Documentation",
     "License": "Licenca",
     "Are you sure you want to open this link?": "Ali ste prepričani, da želite odpreti to povezavo?",
     "An error occurred": "Prišlo je do napake",
