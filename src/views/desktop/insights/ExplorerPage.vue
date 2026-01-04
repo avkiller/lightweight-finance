@@ -19,9 +19,9 @@
                             />
                         </div>
                         <v-tabs show-arrows class="my-4" direction="vertical"
-                                :disabled="loading" v-model="currentExploreId">
+                                :disabled="loading" v-model="currentExplorationId">
                             <v-tab class="tab-text-truncate" key="new" value="">
-                                <span class="text-truncate">{{ tt('New Explore') }}</span>
+                                <span class="text-truncate">{{ tt('New Exploration') }}</span>
                             </v-tab>
                         </v-tabs>
                     </v-navigation-drawer>
@@ -33,7 +33,7 @@
                                            :ripple="false" :icon="true" @click="showNav = !showNav">
                                         <v-icon :icon="mdiMenu" size="24" />
                                     </v-btn>
-                                    <span>{{ tt('Insights & Explore') }}</span>
+                                    <span>{{ tt('Insights Explorer') }}</span>
                                     <v-btn-group class="ms-4" color="default" density="comfortable" variant="outlined" divided>
                                         <v-btn class="button-icon-with-direction" :icon="mdiArrowLeft"
                                                :disabled="loading || !canShiftDateRange"
@@ -77,15 +77,25 @@
                                     </v-btn>
                                     <v-spacer/>
                                     <v-btn density="comfortable" color="default" variant="text" class="ms-2"
-                                           :disabled="loading" :icon="true"
-                                           v-if="activeTab === 'table' || activeTab === 'chart'">
+                                           :disabled="loading" :icon="true">
                                         <v-icon :icon="mdiDotsVertical" />
                                         <v-menu activator="parent">
                                             <v-list>
+                                                <v-list-subheader :title="tt('Timezone Used for Date Range')"
+                                                                  v-if="activeTab === 'query'"/>
+                                                <template v-if="activeTab === 'query'">
+                                                    <v-list-item :key="timezoneType.type" :value="timezoneType.type"
+                                                                 :prepend-icon="timezoneTypeIconMap[timezoneType.type]"
+                                                                 :append-icon="(query.timezoneUsedForDateRange === timezoneType.type ? mdiCheck : undefined)"
+                                                                 :title="timezoneType.displayName"
+                                                                 v-for="timezoneType in allTimezoneTypesUsedForDateRange"
+                                                                 @click="updateTimezoneUsedForDateRange(timezoneType.type)"></v-list-item>
+                                                </template>
                                                 <v-list-item :prepend-icon="mdiExport"
                                                              :title="tt('Export Results')"
                                                              :disabled="loading || !filteredTransactions || filteredTransactions.length < 1"
-                                                             @click="exportResults"></v-list-item>
+                                                             @click="exportResults"
+                                                             v-if="activeTab === 'table' || activeTab === 'chart'"></v-list-item>
                                             </v-list>
                                         </v-menu>
                                     </v-btn>
@@ -94,15 +104,16 @@
 
                             <v-window class="d-flex flex-grow-1 disable-tab-transition w-100-window-container" v-model="activeTab">
                                 <v-window-item value="query">
-                                    <explore-query-tab :loading="loading" />
+                                    <explorer-query-tab :loading="loading" />
                                 </v-window-item>
                                 <v-window-item value="table">
-                                    <explore-data-table-tab ref="exploreDataTableTab"
-                                                            :loading="loading"
-                                                            v-model:count-per-page="countPerPage" />
+                                    <explorer-data-table-tab ref="explorerDataTableTab"
+                                                             :loading="loading"
+                                                             v-model:count-per-page="countPerPage"
+                                                             @click:transaction="onShowTransaction" />
                                 </v-window-item>
                                 <v-window-item value="chart">
-                                    <explore-chart-tab ref="exploreChartTab"
+                                    <explorer-chart-tab ref="explorerChartTab"
                                                        :loading="loading" />
                                 </v-window-item>
                             </v-window>
@@ -120,15 +131,17 @@
                                  @dateRange:change="setCustomDateFilter"
                                  @error="onShowDateRangeError" />
 
+    <edit-dialog ref="editDialog" :type="TransactionEditPageType.Transaction" />
     <export-dialog ref="exportDialog" />
 
     <snack-bar ref="snackbar" />
 </template>
 
 <script setup lang="ts">
-import ExploreQueryTab from '@/views/desktop/insights/tabs/ExploreQueryTab.vue';
-import ExploreDataTableTab from '@/views/desktop/insights/tabs/ExploreDataTableTab.vue';
-import ExploreChartTab from '@/views/desktop/insights/tabs/ExploreChartTab.vue';
+import ExplorerQueryTab from '@/views/desktop/insights/tabs/ExplorerQueryTab.vue';
+import ExplorerDataTableTab from '@/views/desktop/insights/tabs/ExplorerDataTableTab.vue';
+import ExplorerChartTab from '@/views/desktop/insights/tabs/ExplorerChartTab.vue';
+import EditDialog from '@/views/desktop/transactions/list/dialogs/EditDialog.vue';
 import ExportDialog from '@/views/desktop/statistics/transaction/dialogs/ExportDialog.vue';
 import SnackBar from '@/components/desktop/SnackBar.vue';
 
@@ -137,19 +150,22 @@ import { useRouter, onBeforeRouteUpdate } from 'vue-router';
 import { useDisplay } from 'vuetify';
 
 import { useI18n } from '@/locales/helpers.ts';
+import { TransactionEditPageType } from '@/views/base/transactions/TransactionEditPageBase.ts';
 
 import { useUserStore } from '@/stores/user.ts';
 import { useAccountsStore } from '@/stores/account.ts';
 import { useTransactionCategoriesStore } from '@/stores/transactionCategory.ts';
 import { useTransactionTagsStore } from '@/stores/transactionTag.ts';
-import { type TransactionExplorePartialFilter, type TransactionExploreFilter, useExploresStore } from '@/stores/explore.ts';
+import { type TransactionExplorerPartialFilter, type TransactionExplorerFilter, useExplorersStore } from '@/stores/explorer.ts';
 
-import type { NameNumeralValue } from '@/core/base.ts';
+import type { NameNumeralValue, TypeAndDisplayName } from '@/core/base.ts';
 import type { NumeralSystem } from '@/core/numeral.ts';
 import { type WeekDayValue, type LocalizedDateRange, DateRangeScene, DateRange } from '@/core/datetime.ts';
+import { TimezoneTypeForStatistics } from '@/core/timezone.ts';
 
 import {
-    type TransactionInsightDataItem
+    type TransactionInsightDataItem,
+    Transaction
 } from '@/models/transaction.ts';
 
 import {
@@ -166,10 +182,12 @@ import {
     mdiCheck,
     mdiRefresh,
     mdiDotsVertical,
+    mdiHomeClockOutline,
+    mdiInvoiceTextClockOutline,
     mdiExport
 } from '@mdi/js';
 
-interface InsightsExploreProps {
+interface InsightsExplorerProps {
     initId?: string;
     initActiveTab?: string,
     initDateRangeType?: string,
@@ -177,12 +195,13 @@ interface InsightsExploreProps {
     initEndTime?: string,
 }
 
-const props = defineProps<InsightsExploreProps>();
+const props = defineProps<InsightsExplorerProps>();
 
-type ExplorePageTabType = 'query' | 'table' | 'chart';
+type ExplorerPageTabType = 'query' | 'table' | 'chart';
 type SnackBarType = InstanceType<typeof SnackBar>;
-type ExploreDataTableTabType = InstanceType<typeof ExploreDataTableTab>;
-type ExploreChartTabType = InstanceType<typeof ExploreChartTab>;
+type ExplorerDataTableTabType = InstanceType<typeof ExplorerDataTableTab>;
+type ExplorerChartTabType = InstanceType<typeof ExplorerChartTab>;
+type EditDialogType = InstanceType<typeof EditDialog>;
 type ExportDialogType = InstanceType<typeof ExportDialog>;
 
 const router = useRouter();
@@ -191,6 +210,7 @@ const display = useDisplay();
 const {
     tt,
     getAllDateRanges,
+    getAllTimezoneTypesUsedForStatistics,
     getCurrentNumeralSystemType,
     formatDateTimeToLongDateTime,
     formatDateRange
@@ -200,19 +220,25 @@ const userStore = useUserStore();
 const accountsStore = useAccountsStore();
 const transactionCategoriesStore = useTransactionCategoriesStore();
 const transactionTagsStore = useTransactionTagsStore();
-const exploresStore = useExploresStore();
+const explorersStore = useExplorersStore();
+
+const timezoneTypeIconMap = {
+    [TimezoneTypeForStatistics.ApplicationTimezone.type]: mdiHomeClockOutline,
+    [TimezoneTypeForStatistics.TransactionTimezone.type]: mdiInvoiceTextClockOutline
+};
 
 const snackbar = useTemplateRef<SnackBarType>('snackbar');
-const exploreDataTableTab = useTemplateRef<ExploreDataTableTabType>('exploreDataTableTab');
-const exploreChartTab = useTemplateRef<ExploreChartTabType>('exploreChartTab');
+const explorerDataTableTab = useTemplateRef<ExplorerDataTableTabType>('explorerDataTableTab');
+const explorerChartTab = useTemplateRef<ExplorerChartTabType>('explorerChartTab');
 const exportDialog = useTemplateRef<ExportDialogType>('exportDialog');
+const editDialog = useTemplateRef<EditDialogType>('editDialog');
 
 const loading = ref<boolean>(true);
 const initing = ref<boolean>(true);
 const alwaysShowNav = ref<boolean>(display.mdAndUp.value);
 const showNav = ref<boolean>(display.mdAndUp.value);
-const activeTab = ref<ExplorePageTabType>('query');
-const currentExploreId = ref<string>('');
+const activeTab = ref<ExplorerPageTabType>('query');
+const currentExplorationId = ref<string>('');
 const countPerPage = ref<number>(15);
 const showCustomDateRangeDialog = ref<boolean>(false);
 
@@ -220,16 +246,17 @@ const firstDayOfWeek = computed<WeekDayValue>(() => userStore.currentUserFirstDa
 const fiscalYearStart = computed<number>(() => userStore.currentUserFiscalYearStart);
 const numeralSystem = computed<NumeralSystem>(() => getCurrentNumeralSystemType());
 
-const query = computed<TransactionExploreFilter>(() => exploresStore.transactionExploreFilter);
-const filteredTransactions = computed<TransactionInsightDataItem[]>(() => exploresStore.filteredTransactions);
+const query = computed<TransactionExplorerFilter>(() => explorersStore.transactionExplorerFilter);
+const filteredTransactions = computed<TransactionInsightDataItem[]>(() => explorersStore.filteredTransactions);
 
-const allDateRanges = computed<LocalizedDateRange[]>(() => getAllDateRanges(DateRangeScene.InsightsExplore, true));
+const allDateRanges = computed<LocalizedDateRange[]>(() => getAllDateRanges(DateRangeScene.InsightsExplorer, true));
+const allTimezoneTypesUsedForDateRange = computed<TypeAndDisplayName[]>(() => getAllTimezoneTypesUsedForStatistics());
 const canShiftDateRange = computed<boolean>(() => query.value.dateRangeType !== DateRange.All.type);
 const displayQueryDateRangeName = computed<string>(() => formatDateRange(query.value.dateRangeType, query.value.startTime, query.value.endTime));
 const displayQueryStartTime = computed<string>(() => formatDateTimeToLongDateTime(parseDateTimeFromUnixTime(query.value.startTime)));
 const displayQueryEndTime = computed<string>(() => formatDateTimeToLongDateTime(parseDateTimeFromUnixTime(query.value.endTime)));
 
-const allTabs = computed<{ name: string, value: ExplorePageTabType }[]>(() => {
+const allTabs = computed<{ name: string, value: ExplorerPageTabType }[]>(() => {
     return [
         {
             name: tt('Query'),
@@ -260,11 +287,11 @@ const allPageCounts = computed<NameNumeralValue[]>(() => {
 });
 
 function getFilterLinkUrl(): string {
-    return `/insights/explore?${exploresStore.getTransactionExplorePageParams(currentExploreId.value, activeTab.value)}`;
+    return `/insights/explorer?${explorersStore.getTransactionExplorerPageParams(currentExplorationId.value, activeTab.value)}`;
 }
 
-function init(initProps: InsightsExploreProps): void {
-    const filter: TransactionExplorePartialFilter = {
+function init(initProps: InsightsExplorerProps): void {
+    const filter: TransactionExplorerPartialFilter = {
         dateRangeType: initProps.initDateRangeType ? parseInt(initProps.initDateRangeType) : undefined,
         startTime: initProps.initStartTime ? parseInt(initProps.initStartTime) : undefined,
         endTime: initProps.initEndTime ? parseInt(initProps.initEndTime) : undefined
@@ -290,9 +317,9 @@ function init(initProps: InsightsExploreProps): void {
         activeTab.value = 'query';
     }
 
-    exploresStore.initTransactionExploreFilter(filter);
+    explorersStore.initTransactionExplorerFilter(filter);
 
-    if (!needReload && !exploresStore.transactionExploreStateInvalid) {
+    if (!needReload && !explorersStore.transactionExplorerStateInvalid) {
         loading.value = false;
         initing.value = false;
         return;
@@ -303,7 +330,7 @@ function init(initProps: InsightsExploreProps): void {
         transactionCategoriesStore.loadAllCategories({ force: false }),
         transactionTagsStore.loadAllTags({ force: false })
     ]).then(() => {
-        return exploresStore.loadAllTransactions({ force: false });
+        return explorersStore.loadAllTransactions({ force: false });
     }).then(() => {
         loading.value = false;
         initing.value = false;
@@ -320,7 +347,7 @@ function init(initProps: InsightsExploreProps): void {
 function reload(force: boolean): Promise<unknown> | null {
     loading.value = true;
 
-    return exploresStore.loadAllTransactions({
+    return explorersStore.loadAllTransactions({
         force: force
     }).then(() => {
         loading.value = false;
@@ -337,15 +364,21 @@ function reload(force: boolean): Promise<unknown> | null {
     });
 }
 
+function updateTimezoneUsedForDateRange(timezoneType: number): void {
+    explorersStore.updateTransactionExplorerFilter({
+        timezoneUsedForDateRange: timezoneType
+    });
+}
+
 function exportResults(): void {
     if (activeTab.value === 'table' && filteredTransactions.value) {
-        const results = exploreDataTableTab.value?.buildExportResults();
+        const results = explorerDataTableTab.value?.buildExportResults();
 
         if (results) {
             exportDialog.value?.open(results);
         }
     } else if (activeTab.value === 'chart') {
-        const results = exploreChartTab.value?.buildExportResults();
+        const results = explorerChartTab.value?.buildExportResults();
 
         if (results) {
             exportDialog.value?.open(results);
@@ -367,7 +400,7 @@ function setDateFilter(dateType: number): void {
         return;
     }
 
-    const changed = exploresStore.updateTransactionExploreFilter({
+    const changed = explorersStore.updateTransactionExplorerFilter({
         dateRangeType: dateRange.dateType,
         startTime: dateRange.minTime,
         endTime: dateRange.maxTime
@@ -375,7 +408,7 @@ function setDateFilter(dateType: number): void {
 
     if (changed) {
         loading.value = true;
-        exploresStore.updateTransactionExploreInvalidState(true);
+        explorersStore.updateTransactionExplorerInvalidState(true);
         router.push(getFilterLinkUrl());
     }
 }
@@ -385,9 +418,9 @@ function setCustomDateFilter(startTime: number, endTime: number): void {
         return;
     }
 
-    const chartDateType = getDateTypeByDateRange(startTime, endTime, firstDayOfWeek.value, fiscalYearStart.value, DateRangeScene.InsightsExplore);
+    const chartDateType = getDateTypeByDateRange(startTime, endTime, firstDayOfWeek.value, fiscalYearStart.value, DateRangeScene.InsightsExplorer);
 
-    const changed = exploresStore.updateTransactionExploreFilter({
+    const changed = explorersStore.updateTransactionExplorerFilter({
         dateRangeType: chartDateType,
         startTime: startTime,
         endTime: endTime
@@ -397,7 +430,7 @@ function setCustomDateFilter(startTime: number, endTime: number): void {
 
     if (changed) {
         loading.value = true;
-        exploresStore.updateTransactionExploreInvalidState(true);
+        explorersStore.updateTransactionExplorerInvalidState(true);
         router.push(getFilterLinkUrl());
     }
 }
@@ -409,7 +442,7 @@ function shiftDateRange(scale: number): void {
 
     const newDateRange = getShiftedDateRangeAndDateType(query.value.startTime, query.value.endTime, scale, firstDayOfWeek.value, fiscalYearStart.value, DateRangeScene.Normal);
 
-    const changed = exploresStore.updateTransactionExploreFilter({
+    const changed = explorersStore.updateTransactionExplorerFilter({
         dateRangeType: newDateRange.dateType,
         startTime: newDateRange.minTime,
         endTime: newDateRange.maxTime
@@ -417,9 +450,26 @@ function shiftDateRange(scale: number): void {
 
     if (changed) {
         loading.value = true;
-        exploresStore.updateTransactionExploreInvalidState(true);
+        explorersStore.updateTransactionExplorerInvalidState(true);
         router.push(getFilterLinkUrl());
     }
+}
+
+function onShowTransaction(transaction: TransactionInsightDataItem): void {
+    editDialog.value?.open({
+        id: transaction.id,
+        currentTransaction: Transaction.of(transaction)
+    }).then(result => {
+        if (result && result.message) {
+            snackbar.value?.showMessage(result.message);
+        }
+
+        reload(false);
+    }).catch(error => {
+        if (error) {
+            snackbar.value?.showError(error);
+        }
+    });
 }
 
 function onShowDateRangeError(message: string): void {
