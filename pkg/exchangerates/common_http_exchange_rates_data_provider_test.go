@@ -24,7 +24,7 @@ func TestExchangeRatesApiLatestExchangeRateHandler_ReserveBankOfAustraliaDataSou
 	assert.Equal(t, "AUD", exchangeRateResponse.BaseCurrency)
 
 	supportedCurrencyCodes := []string{"CAD", "CHF", "CNY", "EUR", "GBP", "HKD", "IDR", "INR", "JPY", "KRW",
-		"MYR", "NZD", "PHP", "SGD", "THB", "TWD", "USD", "VND"}
+		"MYR", "NZD", "PGK", "PHP", "SGD", "THB", "TWD", "USD", "VND"}
 
 	checkExchangeRatesHaveSpecifiedCurrencies(t, exchangeRateResponse.BaseCurrency, supportedCurrencyCodes, exchangeRateResponse.ExchangeRates)
 }
@@ -128,7 +128,7 @@ func TestExchangeRatesApiLatestExchangeRateHandler_CentralBankOfHungaryDataSourc
 
 	assert.Equal(t, "HUF", exchangeRateResponse.BaseCurrency)
 
-	supportedCurrencyCodes := []string{"AUD", "BGN", "BRL", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR",
+	supportedCurrencyCodes := []string{"AUD", "BRL", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR",
 		"GBP", "HKD", "IDR", "ILS", "INR", "ISK", "JPY", "KRW", "MXN", "MYR", "NOK", "NZD",
 		"PHP", "PLN", "RON", "RSD", "RUB", "SEK", "SGD", "THB", "TRY", "UAH", "USD", "ZAR"}
 
@@ -218,7 +218,7 @@ func TestExchangeRatesApiLatestExchangeRateHandler_NationalBankOfRomaniaDataSour
 
 	assert.Equal(t, "RON", exchangeRateResponse.BaseCurrency)
 
-	supportedCurrencyCodes := []string{"AED", "AUD", "BGN", "BRL", "CAD", "CHF", "CNY", "CZK", "DKK", "EGP",
+	supportedCurrencyCodes := []string{"AED", "AUD", "BRL", "CAD", "CHF", "CNY", "CZK", "DKK", "EGP",
 		"EUR", "GBP", "HKD", "HUF", "IDR", "ILS", "INR", "ISK", "JPY", "KRW", "MDL", "MXN", "MYR",
 		"NOK", "NZD", "PHP", "PLN", "RSD", "RUB", "SEK", "SGD", "THB", "TRY", "UAH", "USD", "ZAR"}
 

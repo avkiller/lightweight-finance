@@ -50,11 +50,16 @@ export interface ApplicationSettings extends BaseApplicationSetting {
     autoSaveTransactionDraft: string;
     autoGetCurrentGeoLocation: boolean;
     alwaysShowTransactionPicturesInMobileTransactionEditPage: boolean;
+    // Import Transaction Dialog
+    rememberLastSelectedFileTypeInImportTransactionDialog: boolean;
+    lastSelectedFileTypeInImportTransactionDialog: string;
     // Insights Explorer Page
     insightsExplorerDefaultDateRangeType: number;
     showTagInInsightsExplorerPage: boolean;
     // Account List Page
     totalAmountExcludeAccountIds: Record<string, boolean>;
+    accountCategoryOrders: string;
+    hideCategoriesWithoutAccounts: boolean;
     // Exchange Rates Data Page
     currencySortByInExchangeRatesPage: number;
     // Statistics Settings
@@ -115,11 +120,16 @@ export const ALL_ALLOWED_CLOUD_SYNC_APP_SETTING_KEY_TYPES: Record<string, UserAp
     'autoSaveTransactionDraft': UserApplicationCloudSettingType.String,
     'autoGetCurrentGeoLocation': UserApplicationCloudSettingType.Boolean,
     'alwaysShowTransactionPicturesInMobileTransactionEditPage': UserApplicationCloudSettingType.Boolean,
+    // Import Transaction Dialog
+    'rememberLastSelectedFileTypeInImportTransactionDialog': UserApplicationCloudSettingType.Boolean,
+    'lastSelectedFileTypeInImportTransactionDialog': UserApplicationCloudSettingType.String,
     // Insights Explorer Page
     'insightsExplorerDefaultDateRangeType': UserApplicationCloudSettingType.Number,
     'showTagInInsightsExplorerPage': UserApplicationCloudSettingType.Boolean,
     // Account List Page
     'totalAmountExcludeAccountIds': UserApplicationCloudSettingType.StringBooleanMap,
+    'accountCategoryOrders': UserApplicationCloudSettingType.String,
+    'hideCategoriesWithoutAccounts': UserApplicationCloudSettingType.Boolean,
     // Exchange Rates Data Page
     'currencySortByInExchangeRatesPage': UserApplicationCloudSettingType.Number,
     // Statistics Settings
@@ -165,11 +175,16 @@ export const DEFAULT_APPLICATION_SETTINGS: ApplicationSettings = {
     autoSaveTransactionDraft: 'disabled',
     autoGetCurrentGeoLocation: false,
     alwaysShowTransactionPicturesInMobileTransactionEditPage: false,
+    // Import Transaction Dialog
+    rememberLastSelectedFileTypeInImportTransactionDialog: true,
+    lastSelectedFileTypeInImportTransactionDialog: '',
     // Insights Explorer Page
     insightsExplorerDefaultDateRangeType: DEFAULT_TRANSACTION_EXPLORER_DATE_RANGE.type,
     showTagInInsightsExplorerPage: true,
     // Account List Page
     totalAmountExcludeAccountIds: {},
+    accountCategoryOrders: '',
+    hideCategoriesWithoutAccounts: false,
     // Exchange Rates Data Page
     currencySortByInExchangeRatesPage: CurrencySortingType.Default.type,
     // Statistics Settings
