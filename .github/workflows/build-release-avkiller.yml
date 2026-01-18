@@ -50,9 +50,9 @@ jobs:
           "TAG_NAME=$LATEST_TAG" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           "VERSION=$VERSION" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '22.x'
+          node-version: '24.x'
           
       - uses: actions/setup-go@v6
         with:
