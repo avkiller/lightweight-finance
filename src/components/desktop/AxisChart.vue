@@ -84,6 +84,7 @@ const {
     getCurrentLanguageTextDirection,
     formatAmountToWesternArabicNumeralsWithoutDigitGrouping,
     formatAmountToLocalizedNumeralsWithCurrency,
+    formatNumberToLocalizedNumerals,
     formatPercentToLocalizedNumerals
 } = useI18n();
 
@@ -396,14 +397,14 @@ function getItemName(name: string): string {
 
 function getDisplayValue(value: number): string {
     if (props.oneHundredPercentStacked) {
-        return formatPercentToLocalizedNumerals(value, 2, '&lt;0.01');
+        return formatPercentToLocalizedNumerals(value, 2, '<0.01');
     }
 
     if (props.amountValue) {
         return formatAmountToLocalizedNumeralsWithCurrency(value, props.defaultCurrency);
     }
 
-    return value.toString();
+    return formatNumberToLocalizedNumerals(value);
 }
 
 function clickItem(e: ECElementEvent): void {

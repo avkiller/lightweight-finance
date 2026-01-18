@@ -84,6 +84,7 @@
             id-field="id"
             name-field="name"
             value-field="value"
+            color-field="color"
             v-if="loading"
         />
         <pie-chart
@@ -117,7 +118,6 @@
         />
         <radar-chart
             :items="categoryDimensionTransactionExplorerData && categoryDimensionTransactionExplorerData.length ? categoryDimensionTransactionExplorerData : []"
-            :min-valid-percent="0.0001"
             :show-value="true"
             :show-percent="true"
             :amount-value="currentExplorer.valueMetric !== TransactionExplorerValueMetric.TransactionCount.value"
