@@ -56,7 +56,9 @@ jobs:
         run: |
            .\build.ps1 frontend -NoLint -NoTest
            dir 
-           7z a -r -tzip -mx9 ezbookkeeping_frontend.zip dist\dist\
+           New-Item -ItemType Directory -Path "ezbookkeeping"
+           Copy-Item dist ezbookkeeping\public -Recurse 
+           7z a -r -tzip -mx9 ezbookkeeping_frontend.zip ezbookkeeping
       - name: Publish Release
         uses: softprops/action-gh-release@v1
         with:
