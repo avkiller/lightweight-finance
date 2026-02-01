@@ -148,6 +148,15 @@ dist/
 # Roo Code
 .roo/
 
+# Binary and build files
+ezbookkeeping
+package/
+
+# Other directories
+data/
+storage/
+log/
+
 # Debug Files
 public/*.html
 public/*.js
@@ -157,7 +166,6 @@ public/js/
 public/fonts/
 log/
 data/
-dubug/
 *debug*
 public/img/layers*.png
 public/img/marker*.png
