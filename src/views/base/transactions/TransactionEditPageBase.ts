@@ -103,7 +103,13 @@ export function useTransactionEditPageBase(type: TransactionEditPageType, initMo
     const firstDayOfWeek = computed<WeekDayValue>(() => userStore.currentUserFirstDayOfWeek);
     const coordinateDisplayType = computed<number>(() => userStore.currentUserCoordinateDisplayType);
 
-    const allTimezones = computed<LocalizedTimezoneInfo[]>(() => getAllTimezones(transaction.value.time, true));
+    const allTimezones = computed<LocalizedTimezoneInfo[]>(() => {
+        if (type === TransactionEditPageType.Template && transaction.value instanceof TransactionTemplate) {
+            return getAllTimezones(getCurrentUnixTime(), true);
+        } else {
+            return getAllTimezones(transaction.value.time, true)
+        }
+    });
     const allAccounts = computed<Account[]>(() => accountsStore.allPlainAccounts);
     const allVisibleAccounts = computed<Account[]>(() => accountsStore.allVisiblePlainAccounts);
     const allAccountsMap = computed<Record<string, Account>>(() => accountsStore.allAccountsMap);
@@ -321,7 +327,7 @@ export function useTransactionEditPageBase(type: TransactionEditPageType, initMo
             }
         }
 
-        if (type === 'template' && transaction.value instanceof TransactionTemplate) {
+        if (type === TransactionEditPageType.Template && transaction.value instanceof TransactionTemplate) {
             if (!transaction.value.name) {
                 return 'Template name cannot be blank';
             }
