@@ -7,10 +7,6 @@ import (
 	"github.com/mayswind/ezbookkeeping/pkg/converters/converter"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/custom"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/datatable"
-<<<<<<< HEAD
-	_default "github.com/mayswind/ezbookkeeping/pkg/converters/default"
-	"github.com/mayswind/ezbookkeeping/pkg/converters/dsv"
-=======
 	"github.com/mayswind/ezbookkeeping/pkg/converters/default"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/feidee"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/fireflyIII"
@@ -19,7 +15,6 @@ import (
 	"github.com/mayswind/ezbookkeeping/pkg/converters/jdcom"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/mt"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/ofx"
-	"github.com/mayswind/ezbookkeeping/pkg/converters/qianji"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/qif"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/wechat"
 	"github.com/mayswind/ezbookkeeping/pkg/errs"
