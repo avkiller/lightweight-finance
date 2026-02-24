@@ -12,7 +12,6 @@ import (
 	"github.com/mayswind/ezbookkeeping/pkg/converters/dsv"
 =======
 	"github.com/mayswind/ezbookkeeping/pkg/converters/default"
->>>>>>> f9e9c9285f2dc26ae584f9a443b1435e3a72e143
 	"github.com/mayswind/ezbookkeeping/pkg/converters/feidee"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/fireflyIII"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/gnucash"
