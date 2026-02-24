@@ -46,7 +46,8 @@ func (c *DataTableTransactionDataImporter) ParseImportedData(ctx core.Context, u
 		!dataTable.HasColumn(datatable.TRANSACTION_DATA_TABLE_TRANSACTION_TYPE) ||
 		!dataTable.HasColumn(datatable.TRANSACTION_DATA_TABLE_SUB_CATEGORY) ||
 		!dataTable.HasColumn(datatable.TRANSACTION_DATA_TABLE_ACCOUNT_NAME) ||
-		!dataTable.HasColumn(datatable.TRANSACTION_DATA_TABLE_AMOUNT) {
+		!dataTable.HasColumn(datatable.TRANSACTION_DATA_TABLE_AMOUNT) ||
+		!dataTable.HasColumn(datatable.TRANSACTION_DATA_TABLE_RELATED_ACCOUNT_NAME) {
 		log.Errorf(ctx, "[data_table_transaction_data_importer.ParseImportedData] cannot parse import data for user \"uid:%d\", because missing essential columns in header row", user.Uid)
 		return nil, nil, nil, nil, nil, nil, errs.ErrMissingRequiredFieldInHeaderRow
 	}
