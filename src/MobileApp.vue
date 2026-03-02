@@ -26,6 +26,7 @@ import { isProduction } from '@/lib/version.ts';
 import { getTheme, isEnableSwipeBack, isEnableAnimate } from '@/lib/settings.ts';
 import { initMapProvider } from '@/lib/map/index.ts';
 import { isUserLogined, isUserUnlocked } from '@/lib/userstate.ts';
+import { updateMapCacheExpiration } from '@/lib/cache.ts';
 import { setExpenseAndIncomeAmountColor } from '@/lib/ui/common.ts';
 import { isiOSHomeScreenMode, isModalShowing, setAppFontSize } from '@/lib/ui/mobile.ts';
 
@@ -227,12 +228,11 @@ if (isUserLogined()) {
                     rootStore.setNotificationContent(response.notificationContent);
                 }
             }
-        });
 
-        // auto refresh exchange rates data
-        if (settingsStore.appSettings.autoUpdateExchangeRatesData) {
-            exchangeRatesStore.getLatestExchangeRates({ silent: true, force: false });
-        }
+            updateMapCacheExpiration(settingsStore.appSettings.mapCacheExpiration);
+            exchangeRatesStore.removeExpiredExchangeRates(true);
+            exchangeRatesStore.autoUpdateExchangeRatesData();
+        });
     }
 }
 </script>

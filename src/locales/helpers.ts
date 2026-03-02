@@ -128,7 +128,8 @@ import {
 } from '@/core/category.ts';
 
 import {
-    TransactionEditScopeType
+    TransactionEditScopeType,
+    TransactionQuickAddButtonActionType
 } from '@/core/transaction.ts';
 
 import {
@@ -2100,6 +2101,31 @@ export function useI18n() {
         return formatPercent(value, precision, lowPrecisionValue, numberFormatOptions);
     }
 
+    function getFormattedVolume(value: number, precision?: number, unit?: 'KiB' | 'MiB'): string {
+        const numberFormatOptions = getNumberFormatOptions({});
+        let displayUnit = unit || 'B';
+
+        if (unit === 'KiB') {
+            value = value / 1024.0;
+        } else if (unit === 'MiB') {
+            value = value / 1024.0 / 1024.0;
+        } else {
+            displayUnit = 'B';
+
+            if (value >= 1024.0) {
+                value = value / 1024.0;
+                displayUnit = 'KiB';
+            }
+
+            if (value >= 1024.0) {
+                value = value / 1024.0;
+                displayUnit = 'MiB';
+            }
+        }
+
+        return formatNumber(value, numberFormatOptions, precision) + ' ' + displayUnit;
+    }
+
     function getFormattedExchangeRateAmount(value: number, numeralSystem?: NumeralSystem): string {
         const numberFormatOptions = getNumberFormatOptions({ numeralSystem });
         return formatExchangeRateAmount(value, numberFormatOptions);
@@ -2408,6 +2434,7 @@ export function useI18n() {
         getAllStatisticsDateAggregationTypes: (analysisType: StatisticsAnalysisType) => getLocalizedChartDateAggregationTypeAndDisplayName(analysisType, true),
         getAllStatisticsDateAggregationTypesWithShortName: (analysisType: StatisticsAnalysisType) => getLocalizedChartDateAggregationTypeAndDisplayName(analysisType, false),
         getAllTransactionEditScopeTypes: () => getLocalizedDisplayNameAndType(TransactionEditScopeType.values()),
+        getAllTransactionQuickAddButtonActionTypes: () => getLocalizedDisplayNameAndType(TransactionQuickAddButtonActionType.values()),
         getAllTransactionScheduledFrequencyTypes: () => getLocalizedDisplayNameAndType(ScheduledTemplateFrequencyType.values()),
         getAllImportTransactionColumnTypes: () => getLocalizedDisplayNameAndType(ImportTransactionColumnType.values()),
         getAllTransactionDefaultCategories,
@@ -2505,6 +2532,7 @@ export function useI18n() {
         formatNumberToWesternArabicNumerals: (value: number, precision?: number) => getFormattedNumber(value, NumeralSystem.WesternArabicNumerals, precision),
         formatPercentToLocalizedNumerals: (value: number, precision: number, lowPrecisionValue: string) => getFormattedPercentValue(value, precision, lowPrecisionValue),
         formatPercentToWesternArabicNumerals: (value: number, precision: number, lowPrecisionValue: string) => getFormattedPercentValue(value, precision, lowPrecisionValue, NumeralSystem.WesternArabicNumerals),
+        formatVolumeToLocalizedNumerals: getFormattedVolume,
         formatExchangeRateAmountToWesternArabicNumerals: (value: number) => getFormattedExchangeRateAmount(value, NumeralSystem.WesternArabicNumerals),
         appendDigitGroupingSymbolAndDecimalSeparator: (value: string) => appendDigitGroupingSymbolAndDecimalSeparator(value, getNumberFormatOptions({})),
         getAdaptiveAmountRate,

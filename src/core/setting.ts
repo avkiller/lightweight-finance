@@ -1,6 +1,7 @@
 import { type WeekDayValue, WeekDay } from './datetime.ts';
 import { TimezoneTypeForStatistics } from './timezone.ts';
 import { CurrencySortingType } from './currency.ts';
+import { TransactionQuickAddButtonActionType } from './transaction.ts';
 import {
     CategoricalChartType,
     TrendChartType,
@@ -43,6 +44,7 @@ export interface ApplicationSettings extends BaseApplicationSetting {
     overviewAccountFilterInHomePage: Record<string, boolean>;
     overviewTransactionCategoryFilterInHomePage: Record<string, boolean>;
     // Transaction List Page
+    quickAddButtonActionInMobileTransactionEditPage: number;
     itemsCountInTransactionListPage: number;
     showTotalAmountInTransactionListPage: boolean;
     showTagInTransactionListPage: boolean;
@@ -62,6 +64,9 @@ export interface ApplicationSettings extends BaseApplicationSetting {
     hideCategoriesWithoutAccounts: boolean;
     // Exchange Rates Data Page
     currencySortByInExchangeRatesPage: number;
+    // Browser Cache Management
+    mapCacheExpiration: number,
+    exchangeRatesDataCacheExpiration: number,
     // Statistics Settings
     statistics: {
         defaultChartDataType: number;
@@ -107,6 +112,9 @@ export interface WebAuthnConfig {
 export const ALL_ALLOWED_CLOUD_SYNC_APP_SETTING_KEY_TYPES: Record<string, UserApplicationCloudSettingType> = {
     // Basic Settings
     'showAccountBalance': UserApplicationCloudSettingType.Boolean,
+    'autoUpdateExchangeRatesData': UserApplicationCloudSettingType.Boolean,
+    // Navigation Bar
+    'showAddTransactionButtonInDesktopNavbar': UserApplicationCloudSettingType.Boolean,
     // Overview Page
     'showAmountInHomePage': UserApplicationCloudSettingType.Boolean,
     'timezoneUsedForStatisticsInHomePage': UserApplicationCloudSettingType.Number,
@@ -117,6 +125,7 @@ export const ALL_ALLOWED_CLOUD_SYNC_APP_SETTING_KEY_TYPES: Record<string, UserAp
     'showTotalAmountInTransactionListPage': UserApplicationCloudSettingType.Boolean,
     'showTagInTransactionListPage': UserApplicationCloudSettingType.Boolean,
     // Transaction Edit Page
+    'quickAddButtonActionInMobileTransactionEditPage': UserApplicationCloudSettingType.Number,
     'autoSaveTransactionDraft': UserApplicationCloudSettingType.String,
     'autoGetCurrentGeoLocation': UserApplicationCloudSettingType.Boolean,
     'alwaysShowTransactionPicturesInMobileTransactionEditPage': UserApplicationCloudSettingType.Boolean,
@@ -132,6 +141,9 @@ export const ALL_ALLOWED_CLOUD_SYNC_APP_SETTING_KEY_TYPES: Record<string, UserAp
     'hideCategoriesWithoutAccounts': UserApplicationCloudSettingType.Boolean,
     // Exchange Rates Data Page
     'currencySortByInExchangeRatesPage': UserApplicationCloudSettingType.Number,
+    // Browser Cache Management
+    'mapCacheExpiration': UserApplicationCloudSettingType.Number,
+    'exchangeRatesDataCacheExpiration': UserApplicationCloudSettingType.Number,
     // Statistics Settings
     'statistics.defaultChartDataType': UserApplicationCloudSettingType.Number,
     'statistics.defaultTimezoneType': UserApplicationCloudSettingType.Number,
@@ -172,6 +184,7 @@ export const DEFAULT_APPLICATION_SETTINGS: ApplicationSettings = {
     showTotalAmountInTransactionListPage: true,
     showTagInTransactionListPage: true,
     // Transaction Edit Page
+    quickAddButtonActionInMobileTransactionEditPage: TransactionQuickAddButtonActionType.Default.type,
     autoSaveTransactionDraft: 'disabled',
     autoGetCurrentGeoLocation: false,
     alwaysShowTransactionPicturesInMobileTransactionEditPage: false,
@@ -187,6 +200,9 @@ export const DEFAULT_APPLICATION_SETTINGS: ApplicationSettings = {
     hideCategoriesWithoutAccounts: false,
     // Exchange Rates Data Page
     currencySortByInExchangeRatesPage: CurrencySortingType.Default.type,
+    // Browser Cache Management
+    mapCacheExpiration: -1,
+    exchangeRatesDataCacheExpiration: 0,
     // Statistics Settings
     statistics: {
         defaultChartDataType: ChartDataType.Default.type,
