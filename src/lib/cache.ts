@@ -9,6 +9,7 @@ import {
     SW_ASSETS_CACHE_NAME,
     SW_CODE_CACHE_NAME,
     SW_MAP_CACHE_NAME,
+    SW_SHARE_CACHE_NAME,
     SW_MESSAGE_TYPE_UPDATE_MAP_CACHE_CONFIG,
     SW_MESSAGE_TYPE_UPDATE_MAP_CACHE_CONFIG_RESPONSE,
     MAP_CACHE_MAX_ENTRIES
@@ -103,6 +104,42 @@ async function getCacheTotalSize(cacheName: string): Promise<number> {
     return totalSize;
 }
 
+export function getShareCacheImageBlob(): Promise<Blob | undefined> {
+    if (!window.caches) {
+        logger.error('caches API is not supported in this browser');
+        return Promise.resolve(undefined);
+    }
+
+    return new Promise((resolve) => {
+        window.caches.open(SW_SHARE_CACHE_NAME).then(cache => {
+            cache.match(SW_SHARE_CACHE_NAME).then(response => {
+                if (!response) {
+                    resolve(undefined);
+                    return;
+                }
+
+                response.blob().then(blob => {
+                    cache.delete(SW_SHARE_CACHE_NAME).then(() => {
+                        resolve(blob);
+                    }).catch(error => {
+                        logger.warn('failed to delete share cache image blob', error);
+                        resolve(blob);
+                    });
+                }).catch(error => {
+                    logger.error('failed to read share cache image blob', error);
+                    resolve(undefined);
+                });
+            }).catch(error => {
+                logger.error('failed to match share cache image blob', error);
+                resolve(undefined);
+            });
+        }).catch(error => {
+            logger.error('failed to open share cache', error);
+            resolve(undefined);
+        });
+    });
+}
+
 export function loadBrowserCacheStatistics(): Promise<BrowserCacheStatistics> {
     return new Promise((resolve, reject) => {
         const caches = window.caches;
@@ -173,6 +210,23 @@ export function updateMapCacheExpiration(expireSeconds: number): void {
             doUpdateMapCacheExpiration(expireSeconds);
         }
     }
+}
+
+export function clearApplicationCodeCache(): Promise<void> {
+    if (!window.caches) {
+        logger.error('caches API is not supported in this browser');
+        return Promise.reject();
+    }
+
+    return window.caches.delete(SW_CODE_CACHE_NAME).then(success => {
+        if (success) {
+            logger.info(`cache "${SW_CODE_CACHE_NAME}" cleared successfully`);
+        } else {
+            logger.warn(`failed to clear cache "${SW_CODE_CACHE_NAME}"`);
+        }
+    }).catch(error => {
+        logger.error(`failed to clear cache "${SW_CODE_CACHE_NAME}"`, error);
+    });
 }
 
 export function clearMapDataCache(): Promise<void> {

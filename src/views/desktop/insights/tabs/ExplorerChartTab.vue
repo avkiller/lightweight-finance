@@ -92,7 +92,7 @@
             :show-value="true"
             :show-percent="true"
             :enable-click-item="true"
-            :amount-value="currentExplorer.valueMetric !== TransactionExplorerValueMetric.TransactionCount.value"
+            :amount-value="TransactionExplorerValueMetric.valueOf(currentExplorer.valueMetric)?.isAmount"
             :default-currency="defaultCurrency"
             id-field="id"
             name-field="name"
@@ -120,7 +120,7 @@
             :items="categoryDimensionTransactionExplorerData && categoryDimensionTransactionExplorerData.length ? categoryDimensionTransactionExplorerData : []"
             :show-value="true"
             :show-percent="true"
-            :amount-value="currentExplorer.valueMetric !== TransactionExplorerValueMetric.TransactionCount.value"
+            :amount-value="TransactionExplorerValueMetric.valueOf(currentExplorer.valueMetric)?.isAmount"
             :default-currency="defaultCurrency"
             name-field="name"
             value-field="totalAmount"
@@ -146,12 +146,12 @@
             :one-hundred-percent-stacked="axisChart100PercentStacked"
             :sorting-type="currentExplorer.chartSortingType"
             :show-value="true"
-            :show-total-amount-in-tooltip="true"
+            :show-total-amount-in-tooltip="TransactionExplorerValueMetric.valueOf(currentExplorer.valueMetric)?.supportSum"
             :total-name-in-tooltip="currentExplorer.valueMetric === TransactionExplorerValueMetric.TransactionCount.value ? tt('Total Transactions') : tt('Total Amount')"
             :category-type-name="currentTransactionExplorerCategoryDimensionName"
             :all-category-names="categoriedNamesSortedByDisplayOrder"
             :items="seriesDimensionTransactionExplorerData"
-            :amount-value="currentExplorer.valueMetric !== TransactionExplorerValueMetric.TransactionCount.value"
+            :amount-value="TransactionExplorerValueMetric.valueOf(currentExplorer.valueMetric)?.isAmount"
             :default-currency="defaultCurrency"
             :enable-click-item="true"
             id-field="id"
@@ -183,6 +183,7 @@ import {
 } from '@/stores/explorer.ts';
 
 import { type NameValue, type TypeAndDisplayName } from '@/core/base.ts';
+import { NumeralSystem } from '@/core/numeral.ts';
 import { Month, WeekDay } from '@/core/datetime.ts';
 import { ChartSortingType, ExportMermaidChartType } from '@/core/statistics.ts';
 import {
@@ -468,7 +469,8 @@ function getCategoriedDataDisplayName(info: CategoriedInfo | SeriesInfo): string
         const parts = name.split('-');
         const year = parts.length === 2 ? parts[0] : '';
         const quarter = parts.length === 2 ? parseInt(parts[1] as string) : 0;
-        const dateTime = year && quarter ? parseDateTimeFromString(`${year}-${quarter * 3}`, TransactionExplorerDimensionType.YearMonth) : undefined;
+        const quarterLastMonth = quarter * 3;
+        const dateTime = year && quarterLastMonth ? parseDateTimeFromString(`${year}-${quarterLastMonth.toString(10).padStart(2, NumeralSystem.WesternArabicNumerals.digitZero)}`, TransactionExplorerDimensionType.YearMonth) : undefined;
         displayName = dateTime ? formatDateTimeToGregorianLikeYearQuarter(dateTime) : tt('Unknown');
     } else if (dimession === TransactionExplorerDataDimension.DateTimeByYear.value) {
         const dateTime = parseDateTimeFromString(name, dimessionType);

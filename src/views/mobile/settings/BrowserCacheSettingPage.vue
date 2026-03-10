@@ -100,6 +100,8 @@
         <f7-actions close-by-outside-click close-on-escape :opened="showMoreActionSheet" @actions:closed="showMoreActionSheet = false">
             <f7-actions-group v-if="isSupportedFileCache && fileCacheStatistics">
                 <f7-actions-button :class="{ 'disabled': loading || !isSupportedFileCache || !fileCacheStatistics }"
+                                   @click="clearApplicationCodeFileCache">{{ tt('Clear Application Code Cache') }}</f7-actions-button>
+                <f7-actions-button :class="{ 'disabled': loading || !isSupportedFileCache || !fileCacheStatistics }"
                                    @click="clearMapCache">{{ tt('Clear Map Data Cache') }}</f7-actions-button>
                 <f7-actions-button :class="{ 'disabled': loading || !isSupportedFileCache || !fileCacheStatistics }"
                                    @click="clearAllFileCache">{{ tt('Clear All File Cache') }}</f7-actions-button>
@@ -141,6 +143,7 @@ const {
     exchangeRatesDataCacheExpiration,
     loadCacheStatistics,
     clearMapDataCache,
+    clearApplicationCodeCache,
     clearAllBrowserCaches,
     clearExchangeRatesDataCache
 } = useAppBrowserCacheSettingPageBase();
@@ -154,6 +157,14 @@ function reloadCacheStatistics(done?: () => void): void {
         done?.();
     }).catch(() => {
         done?.();
+    });
+}
+
+function clearApplicationCodeFileCache(): void {
+    showConfirm('Are you sure you want to clear application code cache?', () => {
+        clearApplicationCodeCache().then(() => {
+            loadCacheStatistics(true);
+        });
     });
 }
 
