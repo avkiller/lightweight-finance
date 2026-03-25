@@ -17,6 +17,7 @@ import (
 	"github.com/mayswind/ezbookkeeping/pkg/converters/ofx"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/qif"
 	"github.com/mayswind/ezbookkeeping/pkg/converters/wechat"
+	"github.com/mayswind/ezbookkeeping/pkg/converters/qianji"
 	"github.com/mayswind/ezbookkeeping/pkg/errs"
 	"github.com/mayswind/ezbookkeeping/pkg/models"
 )
