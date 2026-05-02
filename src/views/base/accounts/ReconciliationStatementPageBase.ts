@@ -63,11 +63,12 @@ export function useReconciliationStatementPageBase() {
     const defaultCurrency = computed<string>(() => userStore.currentUserDefaultCurrency);
 
     const allChartTypes = computed<TypeAndDisplayName[]>(() => getAllAccountBalanceTrendChartTypes());
-    const allDateAggregationTypes = computed<TypeAndDisplayName[]>(() => getAllStatisticsDateAggregationTypesWithShortName(StatisticsAnalysisType.AssetTrends));
+    const allDateAggregationTypes = computed<TypeAndDisplayName[]>(() => getAllStatisticsDateAggregationTypesWithShortName(StatisticsAnalysisType.AssetTrends, !!currentAccountStatementDate.value));
     const allTimezoneTypesUsedForDateRange = computed<TypeAndDisplayName[]>(() => getAllTimezoneTypesUsedForStatistics());
 
     const currentAccount = computed(() => allAccountsMap.value[accountId.value]);
     const currentAccountCurrency = computed<string>(() => currentAccount.value?.currency ?? defaultCurrency.value);
+    const currentAccountStatementDate = computed<number | undefined>(() => accountsStore.getAccountStatementDate(accountId.value) || undefined);
     const isCurrentLiabilityAccount = computed<boolean>(() => currentAccount.value?.isLiability ?? false);
 
     const exportFileName = computed<string>(() => {
@@ -255,13 +256,13 @@ export function useReconciliationStatementPageBase() {
             const transactionTime = parseDateTimeFromUnixTimeWithTimezoneOffset(transaction.time, transaction.utcOffset);
             const type = getDisplayTransactionType(transaction);
             let categoryName = replaceAll(transaction.categoryName, separator, ' ');
-            let displayAmount = formatAmountToWesternArabicNumeralsWithoutDigitGrouping(transaction.sourceAmount);
+            let displayAmount = formatAmountToWesternArabicNumeralsWithoutDigitGrouping(transaction.sourceAmount, transaction.sourceAccount?.currency);
             let displayAccountName = replaceAll(transaction.sourceAccountName, separator, ' ');
 
             if (transaction.type === TransactionType.ModifyBalance) {
                 categoryName = tt('Modify Balance');
             } else if (transaction.type === TransactionType.Transfer && transaction.destinationAccountId === accountId.value) {
-                displayAmount = formatAmountToWesternArabicNumeralsWithoutDigitGrouping(transaction.destinationAmount);
+                displayAmount = formatAmountToWesternArabicNumeralsWithoutDigitGrouping(transaction.destinationAmount, transaction.destinationAccount?.currency);
             }
 
             if (transaction.type === TransactionType.Transfer && transaction.destinationAccount) {
@@ -271,9 +272,9 @@ export function useReconciliationStatementPageBase() {
             let displayAccountBalance = '';
 
             if (isCurrentLiabilityAccount.value) {
-                displayAccountBalance = formatAmountToWesternArabicNumeralsWithoutDigitGrouping(-transaction.accountClosingBalance);
+                displayAccountBalance = formatAmountToWesternArabicNumeralsWithoutDigitGrouping(-transaction.accountClosingBalance, currentAccountCurrency.value);
             } else {
-                displayAccountBalance = formatAmountToWesternArabicNumeralsWithoutDigitGrouping(transaction.accountClosingBalance);
+                displayAccountBalance = formatAmountToWesternArabicNumeralsWithoutDigitGrouping(transaction.accountClosingBalance, currentAccountCurrency.value);
             }
 
             const description = replaceAll(transaction.comment || '', separator, ' ');
@@ -309,6 +310,7 @@ export function useReconciliationStatementPageBase() {
         allTimezoneTypesUsedForDateRange,
         currentAccount,
         currentAccountCurrency,
+        currentAccountStatementDate,
         isCurrentLiabilityAccount,
         exportFileName,
         displayStartDateTime,

@@ -246,6 +246,7 @@
                         :items="[]"
                         :legend-name="isCurrentLiabilityAccount ? tt('Account Outstanding Balance') : tt('Account Balance')"
                         :account="currentAccount"
+                        :statement-date="currentAccountStatementDate"
                         :skeleton="true"
                         v-if="showAccountBalanceTrendsCharts && loading"
                     />
@@ -258,6 +259,7 @@
                         :items="reconciliationStatements?.transactions"
                         :legend-name="isCurrentLiabilityAccount ? tt('Account Outstanding Balance') : tt('Account Balance')"
                         :account="currentAccount"
+                        :statement-date="currentAccountStatementDate"
                         v-if="showAccountBalanceTrendsCharts && !loading"
                     />
                 </div>
@@ -295,7 +297,6 @@ import { useTransactionCategoriesStore } from '@/stores/transactionCategory.ts';
 import { useTransactionsStore } from '@/stores/transaction.ts';
 
 import type { NameNumeralValue } from '@/core/base.ts';
-import type { NumeralSystem } from '@/core/numeral.ts';
 import { TimezoneTypeForStatistics } from '@/core/timezone.ts';
 import { TransactionType } from '@/core/transaction.ts';
 import { AccountBalanceTrendChartType, ChartDateAggregationType } from '@/core/statistics.ts';
@@ -320,6 +321,7 @@ import {
     mdiChartWaterfall,
     mdiCalendarTodayOutline,
     mdiCalendarMonthOutline,
+    mdiCalendarTextOutline,
     mdiHomeClockOutline,
     mdiInvoiceTextClockOutline,
     mdiLayersTripleOutline,
@@ -338,7 +340,10 @@ const emit = defineEmits<{
     (e: 'error', message: string): void;
 }>();
 
-const { tt, getCurrentNumeralSystemType, formatNumberToLocalizedNumerals } = useI18n();
+const {
+    tt,
+    formatNumberToLocalizedNumerals
+} = useI18n();
 
 const {
     accountId,
@@ -353,6 +358,7 @@ const {
     allTimezoneTypesUsedForDateRange,
     currentAccount,
     currentAccountCurrency,
+    currentAccountStatementDate,
     isCurrentLiabilityAccount,
     exportFileName,
     displayStartDateTime,
@@ -391,6 +397,7 @@ const chartDataDateAggregationTypeIconMap = {
     [ChartDateAggregationType.Quarter.type]: mdiLayersTripleOutline,
     [ChartDateAggregationType.Year.type]: mdiLayersTripleOutline,
     [ChartDateAggregationType.FiscalYear.type]: mdiLayersTripleOutline,
+    [ChartDateAggregationType.BillingCycle.type]: mdiCalendarTextOutline,
 };
 
 const timezoneTypeIconMap = {
@@ -411,7 +418,6 @@ const chartType = ref<number>(AccountBalanceTrendChartType.Default.type);
 
 let rejectFunc: ((reason?: unknown) => void) | null = null;
 
-const numeralSystem = computed<NumeralSystem>(() => getCurrentNumeralSystemType());
 const reconciliationStatementsTablePageOptions = computed<NameNumeralValue[]>(() => getTablePageOptions(reconciliationStatements.value?.transactions.length));
 
 const totalPageCount = computed<number>(() => {
@@ -461,7 +467,7 @@ function getTablePageOptions(linesCount?: number): NameNumeralValue[] {
             break;
         }
 
-        pageOptions.push({ value: count, name: numeralSystem.value.formatNumber(count) });
+        pageOptions.push({ value: count, name: formatNumberToLocalizedNumerals(count) });
     }
 
     pageOptions.push({ value: -1, name: tt('All') });

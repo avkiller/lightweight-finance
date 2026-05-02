@@ -325,6 +325,36 @@ type TransactionGetRequest struct {
 	TrimTag      bool  `form:"trim_tag"`
 }
 
+// TransactionBatchUpdateCategoryRequest represents all parameters of transaction batch update category request
+type TransactionBatchUpdateCategoryRequest struct {
+	TransactionIds []string `json:"transactionIds" binding:"required"`
+	CategoryId     int64    `json:"categoryId,string" binding:"required"`
+}
+
+// TransactionBatchUpdateAccountRequest represents all parameters of transaction batch update account request
+type TransactionBatchUpdateAccountRequest struct {
+	TransactionIds       []string `json:"transactionIds" binding:"required"`
+	AccountId            int64    `json:"accountId,string" binding:"required"`
+	IsDestinationAccount bool     `json:"isDestinationAccount"`
+}
+
+// TransactionBatchAddTagsRequest represents all parameters of transaction batch add tags request
+type TransactionBatchAddTagsRequest struct {
+	TransactionIds []string `json:"transactionIds" binding:"required"`
+	TagIds         []string `json:"tagIds" binding:"required"`
+}
+
+// TransactionBatchRemoveTagsRequest represents all parameters of transaction batch remove tags request
+type TransactionBatchRemoveTagsRequest struct {
+	TransactionIds []string `json:"transactionIds" binding:"required"`
+	TagIds         []string `json:"tagIds" binding:"required"`
+}
+
+// TransactionBatchClearTagsRequest represents all parameters of transaction batch clear tags request
+type TransactionBatchClearTagsRequest struct {
+	TransactionIds []string `json:"transactionIds" binding:"required"`
+}
+
 // TransactionMoveBetweenAccountsRequest represents all parameters of moving all transactions between accounts request
 type TransactionMoveBetweenAccountsRequest struct {
 	FromAccountId int64 `json:"fromAccountId,string" binding:"required,min=1"`
@@ -334,6 +364,12 @@ type TransactionMoveBetweenAccountsRequest struct {
 // TransactionDeleteRequest represents all parameters of transaction deleting request
 type TransactionDeleteRequest struct {
 	Id int64 `json:"id,string" binding:"required,min=1"`
+}
+
+// TransactionBatchDeleteRequest represents all parameters of transaction batch deleting request
+type TransactionBatchDeleteRequest struct {
+	Ids      []string `json:"ids,string" binding:"required"`
+	Password string   `json:"password" binding:"omitempty,min=6,max=128"`
 }
 
 // YearMonthRangeRequest represents all parameters of a request with year and month range

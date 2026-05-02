@@ -24,6 +24,7 @@ import {
     DEFAULT_UPLOAD_API_TIMEOUT,
     DEFAULT_EXPORT_API_TIMEOUT,
     DEFAULT_IMPORT_API_TIMEOUT,
+    DEFAULT_BATCH_UPDATE_TRANSACTIONS_API_TIMEOUT,
     DEFAULT_CLEAR_ALL_TRANSACTIONS_API_TIMEOUT,
     DEFAULT_LLM_API_TIMEOUT,
     GOOGLE_MAP_JAVASCRIPT_URL,
@@ -64,8 +65,14 @@ import type {
 import type {
     TransactionCreateRequest,
     TransactionModifyRequest,
+    TransactionBatchUpdateCategoryRequest,
+    TransactionBatchUpdateAccountRequest,
+    TransactionBatchAddTagsRequest,
+    TransactionBatchRemoveTagsRequest,
+    TransactionBatchClearTagsRequest,
     TransactionMoveBetweenAccountsRequest,
     TransactionDeleteRequest,
+    TransactionBatchDeleteRequest,
     TransactionImportRequest,
     TransactionListByMaxTimeRequest,
     TransactionListInMonthByPageRequest,
@@ -611,11 +618,41 @@ export default {
     modifyTransaction: (req: TransactionModifyRequest): ApiResponsePromise<TransactionInfoResponse> => {
         return axios.post<ApiResponse<TransactionInfoResponse>>('v1/transactions/modify.json', req);
     },
+    batchUpdateTransactionCategories: (req: TransactionBatchUpdateCategoryRequest): ApiResponsePromise<boolean> => {
+        return axios.post<ApiResponse<boolean>>('v1/transactions/batch_update/category.json', req, {
+            timeout: DEFAULT_BATCH_UPDATE_TRANSACTIONS_API_TIMEOUT
+        } as ApiRequestConfig);
+    },
+    batchUpdateTransactionAccounts: (req: TransactionBatchUpdateAccountRequest): ApiResponsePromise<boolean> => {
+        return axios.post<ApiResponse<boolean>>('v1/transactions/batch_update/account.json', req, {
+            timeout: DEFAULT_BATCH_UPDATE_TRANSACTIONS_API_TIMEOUT
+        } as ApiRequestConfig);
+    },
+    batchAddTagsToTransaction: (req: TransactionBatchAddTagsRequest): ApiResponsePromise<boolean> => {
+        return axios.post<ApiResponse<boolean>>('v1/transactions/batch_update/tag/add.json', req, {
+            timeout: DEFAULT_BATCH_UPDATE_TRANSACTIONS_API_TIMEOUT
+        } as ApiRequestConfig);
+    },
+    batchRemoveTagsFromTransaction: (req: TransactionBatchRemoveTagsRequest): ApiResponsePromise<boolean> => {
+        return axios.post<ApiResponse<boolean>>('v1/transactions/batch_update/tag/remove.json', req, {
+            timeout: DEFAULT_BATCH_UPDATE_TRANSACTIONS_API_TIMEOUT
+        } as ApiRequestConfig);
+    },
+    batchClearAllTagsFromTransaction: (req: TransactionBatchClearTagsRequest): ApiResponsePromise<boolean> => {
+        return axios.post<ApiResponse<boolean>>('v1/transactions/batch_update/tag/clear.json', req, {
+            timeout: DEFAULT_BATCH_UPDATE_TRANSACTIONS_API_TIMEOUT
+        } as ApiRequestConfig);
+    },
     moveAllTransactionsBetweenAccounts: (req: TransactionMoveBetweenAccountsRequest): ApiResponsePromise<boolean> => {
         return axios.post<ApiResponse<boolean>>('v1/transactions/move/all.json', req);
     },
     deleteTransaction: (req: TransactionDeleteRequest): ApiResponsePromise<boolean> => {
         return axios.post<ApiResponse<boolean>>('v1/transactions/delete.json', req);
+    },
+    batchDeleteTransaction: (req: TransactionBatchDeleteRequest): ApiResponsePromise<boolean> => {
+        return axios.post<ApiResponse<boolean>>('v1/transactions/batch_delete.json', req, {
+            timeout: DEFAULT_BATCH_UPDATE_TRANSACTIONS_API_TIMEOUT
+        } as ApiRequestConfig);
     },
     parseImportCustomFile: ({ fileType, fileEncoding, importFile }: { fileType: string, fileEncoding?: string, importFile: File }): ApiResponsePromise<string[][]> => {
         return axios.postForm<ApiResponse<string[][]>>('v1/transactions/parse_custom_file.json', {
