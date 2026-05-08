@@ -549,10 +549,6 @@ func ParseTransactionTagFilter(tagFilterStr string) ([]*TransactionTagFilter, er
 
 // IsEditable returns whether this transaction can be edited
 func (t *Transaction) IsEditable(currentUser *User, clientTimezone *time.Location, account *Account, relatedAccount *Account) bool {
-	if currentUser == nil || !currentUser.CanEditTransactionByTransactionTime(t.TransactionTime, clientTimezone) {
-		return false
-	}
-
 	if account == nil || account.Hidden {
 		return false
 	}
@@ -561,6 +557,10 @@ func (t *Transaction) IsEditable(currentUser *User, clientTimezone *time.Locatio
 		if relatedAccount == nil || relatedAccount.Hidden {
 			return false
 		}
+	}
+
+	if currentUser == nil || !currentUser.CanEditTransactionByTransactionTime(t.TransactionTime, clientTimezone, account, relatedAccount) {
+		return false
 	}
 
 	return true

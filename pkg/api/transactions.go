@@ -1075,7 +1075,15 @@ func (a *TransactionsApi) TransactionCreateHandler(c *core.WebContext) (any, *er
 	}
 
 	transaction := a.createNewTransactionModel(uid, &transactionCreateReq, c.ClientIP())
-	transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone)
+
+	allUsedAccounts, err := a.getTransactionUsedAccounts(c, uid, []*models.Transaction{transaction})
+
+	if err != nil {
+		log.Errorf(c, "[transactions.TransactionCreateHandler] failed to get transaction used accounts for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone, allUsedAccounts[transaction.AccountId], allUsedAccounts[transaction.RelatedAccountId])
 
 	if !transactionEditable {
 		return nil, errs.ErrCannotCreateTransactionWithThisTransactionTime
@@ -1268,8 +1276,15 @@ func (a *TransactionsApi) TransactionModifyHandler(c *core.WebContext) (any, *er
 		return nil, errs.ErrNothingWillBeUpdated
 	}
 
-	transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone)
-	newTransactionEditable := user.CanEditTransactionByTransactionTime(newTransaction.TransactionTime, clientTimezone)
+	allUsedAccounts, err := a.getTransactionUsedAccounts(c, uid, []*models.Transaction{transaction, newTransaction})
+
+	if err != nil {
+		log.Errorf(c, "[transactions.TransactionModifyHandler] failed to get transaction used accounts for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone, allUsedAccounts[transaction.AccountId], allUsedAccounts[transaction.RelatedAccountId])
+	newTransactionEditable := user.CanEditTransactionByTransactionTime(newTransaction.TransactionTime, clientTimezone, allUsedAccounts[newTransaction.AccountId], allUsedAccounts[newTransaction.RelatedAccountId])
 
 	if !transactionEditable || !newTransactionEditable {
 		return nil, errs.ErrCannotModifyTransactionWithThisTransactionTime
@@ -1402,6 +1417,13 @@ func (a *TransactionsApi) TransactionBatchUpdateCategoriesHandler(c *core.WebCon
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
+	allUsedAccounts, err := a.getTransactionUsedAccounts(c, uid, transactions)
+
+	if err != nil {
+		log.Errorf(c, "[transactions.TransactionBatchUpdateCategoriesHandler] failed to get transaction used accounts for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
 	allTransactionIds := make([]int64, 0, len(transactions))
 
 	for i := 0; i < len(transactions); i++ {
@@ -1412,7 +1434,7 @@ func (a *TransactionsApi) TransactionBatchUpdateCategoriesHandler(c *core.WebCon
 			return nil, errs.ErrTransactionTypeInvalid
 		}
 
-		transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone)
+		transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone, allUsedAccounts[transaction.AccountId], allUsedAccounts[transaction.RelatedAccountId])
 
 		if !transactionEditable {
 			log.Warnf(c, "[transactions.TransactionBatchUpdateCategoriesHandler] transaction \"id:%d\" is not editable for user \"uid:%d\"", transaction.TransactionId, uid)
@@ -1548,9 +1570,19 @@ func (a *TransactionsApi) TransactionBatchUpdateAccountsHandler(c *core.WebConte
 			return nil, errs.ErrCannotMoveTransactionBetweenAccountsWithDifferentCurrencies
 		}
 
-		transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone)
+		newSourceAccount := accountMap[transaction.AccountId]
+		newDestinationAccount := accountMap[transaction.RelatedAccountId]
 
-		if !transactionEditable {
+		if !transactionBatchUpdateReq.IsDestinationAccount && transaction.AccountId != account.AccountId {
+			newSourceAccount = account
+		} else if transactionBatchUpdateReq.IsDestinationAccount && transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT && transaction.RelatedAccountId != account.AccountId {
+			newDestinationAccount = account
+		}
+
+		transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone, accountMap[transaction.AccountId], accountMap[transaction.RelatedAccountId])
+		newTransactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone, newSourceAccount, newDestinationAccount)
+
+		if !transactionEditable || !newTransactionEditable {
 			log.Warnf(c, "[transactions.TransactionBatchUpdateAccountsHandler] transaction \"id:%d\" is not editable for user \"uid:%d\"", transaction.TransactionId, uid)
 			return nil, errs.ErrCannotModifyTransactionWithThisTransactionTime
 		}
@@ -1651,6 +1683,13 @@ func (a *TransactionsApi) TransactionBatchAddTagsHandler(c *core.WebContext) (an
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
+	allUsedAccounts, err := a.getTransactionUsedAccounts(c, uid, transactions)
+
+	if err != nil {
+		log.Errorf(c, "[transactions.TransactionBatchAddTagsHandler] failed to get transaction used accounts for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
 	transactionTagIndexes, err := a.transactionTags.GetAllTagIdsOfTransactions(c, uid, transactionIds)
 
 	if err != nil {
@@ -1668,7 +1707,7 @@ func (a *TransactionsApi) TransactionBatchAddTagsHandler(c *core.WebContext) (an
 			return nil, errs.ErrTransactionTypeInvalid
 		}
 
-		transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone)
+		transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone, allUsedAccounts[transaction.AccountId], allUsedAccounts[transaction.RelatedAccountId])
 
 		if !transactionEditable {
 			log.Warnf(c, "[transactions.TransactionBatchAddTagsHandler] transaction \"id:%d\" is not editable for user \"uid:%d\"", transaction.TransactionId, uid)
@@ -1769,6 +1808,13 @@ func (a *TransactionsApi) TransactionBatchRemoveTagsHandler(c *core.WebContext) 
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
+	allUsedAccounts, err := a.getTransactionUsedAccounts(c, uid, transactions)
+
+	if err != nil {
+		log.Errorf(c, "[transactions.TransactionBatchRemoveTagsHandler] failed to get transaction used accounts for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
 	allTransactionIds := make([]int64, 0, len(transactions))
 
 	for i := 0; i < len(transactions); i++ {
@@ -1779,7 +1825,7 @@ func (a *TransactionsApi) TransactionBatchRemoveTagsHandler(c *core.WebContext) 
 			return nil, errs.ErrTransactionTypeInvalid
 		}
 
-		transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone)
+		transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone, allUsedAccounts[transaction.AccountId], allUsedAccounts[transaction.RelatedAccountId])
 
 		if !transactionEditable {
 			log.Warnf(c, "[transactions.TransactionBatchRemoveTagsHandler] transaction \"id:%d\" is not editable for user \"uid:%d\"", transaction.TransactionId, uid)
@@ -1842,6 +1888,13 @@ func (a *TransactionsApi) TransactionBatchClearTagsHandler(c *core.WebContext) (
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
+	allUsedAccounts, err := a.getTransactionUsedAccounts(c, uid, transactions)
+
+	if err != nil {
+		log.Errorf(c, "[transactions.TransactionBatchClearTagsHandler] failed to get transaction used accounts for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
 	allTransactionIds := make([]int64, 0, len(transactions))
 
 	for i := 0; i < len(transactions); i++ {
@@ -1852,7 +1905,7 @@ func (a *TransactionsApi) TransactionBatchClearTagsHandler(c *core.WebContext) (
 			return nil, errs.ErrTransactionTypeInvalid
 		}
 
-		transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone)
+		transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone, allUsedAccounts[transaction.AccountId], allUsedAccounts[transaction.RelatedAccountId])
 
 		if !transactionEditable {
 			log.Warnf(c, "[transactions.TransactionBatchClearTagsHandler] transaction \"id:%d\" is not editable for user \"uid:%d\"", transaction.TransactionId, uid)
@@ -1970,7 +2023,14 @@ func (a *TransactionsApi) TransactionDeleteHandler(c *core.WebContext) (any, *er
 		return nil, errs.ErrTransactionTypeInvalid
 	}
 
-	transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone)
+	allUsedAccounts, err := a.getTransactionUsedAccounts(c, uid, []*models.Transaction{transaction})
+
+	if err != nil {
+		log.Errorf(c, "[transactions.TransactionDeleteHandler] failed to get transaction used accounts for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone, allUsedAccounts[transaction.AccountId], allUsedAccounts[transaction.RelatedAccountId])
 
 	if !transactionEditable {
 		return nil, errs.ErrCannotDeleteTransactionWithThisTransactionTime
@@ -2033,13 +2093,20 @@ func (a *TransactionsApi) TransactionBatchDeleteHandler(c *core.WebContext) (any
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
+	allUsedAccounts, err := a.getTransactionUsedAccounts(c, uid, transactions)
+
+	if err != nil {
+		log.Errorf(c, "[transactions.TransactionBatchDeleteHandler] failed to get transaction used accounts for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
 	for i := 0; i < len(transactions); i++ {
 		transaction := transactions[i]
-		transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone)
+		transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone, allUsedAccounts[transaction.AccountId], allUsedAccounts[transaction.RelatedAccountId])
 
 		if !transactionEditable {
-			log.Warnf(c, "[transactions.TransactionBatchUpdateCategoriesHandler] transaction \"id:%d\" is not editable for user \"uid:%d\"", transaction.TransactionId, uid)
-			return nil, errs.ErrCannotModifyTransactionWithThisTransactionTime
+			log.Warnf(c, "[transactions.TransactionBatchDeleteHandler] transaction \"id:%d\" is not editable for user \"uid:%d\"", transaction.TransactionId, uid)
+			return nil, errs.ErrCannotDeleteTransactionWithThisTransactionTime
 		}
 	}
 
@@ -2470,13 +2537,24 @@ func (a *TransactionsApi) TransactionImportHandler(c *core.WebContext) (any, *er
 	for i := 0; i < len(transactionImportReq.Transactions); i++ {
 		transactionCreateReq := transactionImportReq.Transactions[i]
 		transaction := a.createNewTransactionModel(uid, transactionCreateReq, c.ClientIP())
-		transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone)
+		newTransactions[i] = transaction
+	}
+
+	allUsedAccounts, err := a.getTransactionUsedAccounts(c, uid, newTransactions)
+
+	if err != nil {
+		log.Errorf(c, "[transactions.TransactionImportHandler] failed to get transaction used accounts for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	for i := 0; i < len(newTransactions); i++ {
+		transaction := newTransactions[i]
+		transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone, allUsedAccounts[transaction.AccountId], allUsedAccounts[transaction.RelatedAccountId])
 
 		if !transactionEditable {
+			log.Warnf(c, "[transactions.TransactionImportHandler] transaction \"index:%d\" is not editable for user \"uid:%d\"", i, uid)
 			return nil, errs.ErrCannotCreateTransactionWithThisTransactionTime
 		}
-
-		newTransactions[i] = transaction
 	}
 
 	err = a.transactions.BatchCreateTransactions(c, user.Uid, newTransactions, newTransactionTagIdsMap, func(currentProcess float64) {
@@ -2706,6 +2784,41 @@ func (a *TransactionsApi) getTransactionEssentialDataByTransactionIds(c *core.We
 	}
 
 	return accountMap, categoryMap, tagMap, allTransactionTagIds, pictureInfoMap, nil
+}
+
+func (a *TransactionsApi) getTransactionUsedAccounts(c *core.WebContext, uid int64, transactions []*models.Transaction) (map[int64]*models.Account, error) {
+	accountIds := make([]int64, 0, len(transactions)*2)
+
+	for i := 0; i < len(transactions); i++ {
+		accountIds = append(accountIds, transactions[i].AccountId)
+
+		if transactions[i].Type == models.TRANSACTION_DB_TYPE_TRANSFER_IN || transactions[i].Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT {
+			accountIds = append(accountIds, transactions[i].RelatedAccountId)
+		}
+	}
+
+	accountMap, err := a.accounts.GetAccountsByAccountIds(c, uid, utils.ToUniqueInt64Slice(accountIds))
+
+	if err != nil {
+		log.Errorf(c, "[transactions.getTransactionUsedAccounts] failed to get accounts for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	for i := 0; i < len(transactions); i++ {
+		if _, exists := accountMap[transactions[i].AccountId]; !exists {
+			log.Warnf(c, "[transactions.getTransactionUsedAccounts] account of transaction \"id:%d\" does not exist for user \"uid:%d\"", transactions[i].TransactionId, uid)
+			return nil, errs.ErrSourceAccountNotFound
+		}
+
+		if transactions[i].Type == models.TRANSACTION_DB_TYPE_TRANSFER_IN || transactions[i].Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT {
+			if _, exists := accountMap[transactions[i].RelatedAccountId]; !exists {
+				log.Warnf(c, "[transactions.getTransactionUsedAccounts] related account of transaction \"id:%d\" does not exist for user \"uid:%d\"", transactions[i].TransactionId, uid)
+				return nil, errs.ErrDestinationAccountNotFound
+			}
+		}
+	}
+
+	return accountMap, nil
 }
 
 func (a *TransactionsApi) getTransactionResponseListResult(c *core.WebContext, user *models.User, transactions []*models.Transaction, allAccounts map[int64]*models.Account, categoryMap map[int64]*models.TransactionCategory, tagMap map[int64]*models.TransactionTag, allTransactionTagIds map[int64][]int64, pictureInfoMap map[int64][]*models.TransactionPictureInfo, clientTimezone *time.Location, withPictures bool, trimAccount bool, trimCategory bool, trimTag bool) (models.TransactionInfoResponseSlice, error) {
