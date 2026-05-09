@@ -16,6 +16,11 @@ on:
         type: boolean
         default: true
         required: true
+     release-build:
+        required: false
+        default: '1'
+        description: "Whether to build the windows backend in release mode. If set to '1', the backend will be built in release mode. Otherwise, it will be built in development mode."
+
   
 env:
    TAG_NAME: ${{ inputs.version }}
@@ -77,8 +82,10 @@ jobs:
           
       - name: build for windows pkg
         run: |
-           .\build.ps1 package -Output ezbookkeeping.zip -NoLint -NoTest
+           .\build.ps1 package -Release -Output ezbookkeeping.zip -NoLint -NoTest
            dir 
+        env:
+          RELEASE_BUILD: "${{ inputs.release-build }}"
 
       - name: Publish Release
         uses: softprops/action-gh-release@v1
