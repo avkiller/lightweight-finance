@@ -1,13 +1,28 @@
 name: Build Release for avkiller
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  #push:
+  #  tags:
+  #    - "v*.*.*"
   workflow_dispatch:
+   inputs:
+     version:
+        description: 'Version for this release'
+        type: string
+        default: 'v1.4.0'
+        required: true
+     make_latest:
+        description: 'Mark this release as latest'
+        type: boolean
+        default: true
+        required: true
+  
 env:
-   TAG_NAME: "nightly"
-   VERSION: "1.2.0"
+   TAG_NAME: ${{ inputs.version }}
+   VERSION: ${{ inputs.version }}
+permissions:
+  contents: write
+
 
 jobs:
   build-windows-pkg:
@@ -69,6 +84,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           prerelease: false
+          draft: true
           name: ${{ env.TAG_NAME }}
           tag_name: ${{ env.TAG_NAME }}
           files: |
