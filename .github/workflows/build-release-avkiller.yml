@@ -11,6 +11,10 @@ on:
         type: string
         default: 'v1.4.0'
         required: true
+     go-version:
+       required: false
+       description: "The Go version to use for building the windows backend. The version should be in the format of 'x.y.z'."
+       default: "1.26.2"
      make_latest:
         description: 'Mark this release as latest'
         type: boolean
@@ -34,7 +38,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: get tag
         run: |
           if ($env:GITHUB_EVENT_NAME -eq "workflow_dispatch") {
@@ -76,9 +80,7 @@ jobs:
           
       - uses: actions/setup-go@v6
         with:
-          go-version: '1.25'
-          cache: true
-          check-latest: true
+          go-version: ${{ inputs.go-version }}
           
       - name: build for windows pkg
         run: |
