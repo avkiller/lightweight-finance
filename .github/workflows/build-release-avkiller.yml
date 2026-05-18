@@ -9,7 +9,7 @@ on:
      version:
         description: 'Version for this release'
         type: string
-        default: 'v1.4.0'
+        default: 'v1.5.0'
         required: true
      go-version:
        required: false
@@ -40,6 +40,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
       - name: get tag
+        if: false
         run: |
           if ($env:GITHUB_EVENT_NAME -eq "workflow_dispatch") {
             # 获取所有 Tag（确保包含远程 Tag）
