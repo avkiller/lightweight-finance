@@ -152,6 +152,7 @@ dist/
 ezbookkeeping
 !**/ezbookkeeping/
 /package/
+/package/
 
 # Environment variable files
 .env
