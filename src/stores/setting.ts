@@ -264,6 +264,19 @@ export const useSettingsStore = defineStore('settings', () => {
         updateUserApplicationCloudSettingValue('alwaysShowTransactionPicturesInMobileTransactionEditPage', value);
     }
 
+    function setTransactionPictureQuality(value: number): void {
+        updateApplicationSettingsValue('transactionPictureQuality', value);
+        appSettings.value.transactionPictureQuality = value;
+        updateUserApplicationCloudSettingValue('transactionPictureQuality', value);
+    }
+
+    // AI Image Recognition
+    function setAutoUploadTransactionPictureForAIRecognition(value: boolean): void {
+        updateApplicationSettingsValue('autoUploadTransactionPictureForAIRecognition', value);
+        appSettings.value.autoUploadTransactionPictureForAIRecognition = value;
+        updateUserApplicationCloudSettingValue('autoUploadTransactionPictureForAIRecognition', value);
+    }
+
     // Import Transaction Dialog
     function setRememberLastSelectedFileTypeInImportTransactionDialog(value: boolean): void {
         updateApplicationSettingsValue('rememberLastSelectedFileTypeInImportTransactionDialog', value);
@@ -560,6 +573,9 @@ export const useSettingsStore = defineStore('settings', () => {
         setAutoSaveTransactionDraft,
         setAutoGetCurrentGeoLocation,
         setAlwaysShowTransactionPicturesInMobileTransactionEditPage,
+        setTransactionPictureQuality,
+        // -- AI Image Recognition
+        setAutoUploadTransactionPictureForAIRecognition,
         // -- Import Transaction Dialog
         setRememberLastSelectedFileTypeInImportTransactionDialog,
         setLastSelectedFileTypeInImportTransactionDialog,

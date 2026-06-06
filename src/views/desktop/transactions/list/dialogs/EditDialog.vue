@@ -473,7 +473,7 @@
 
     <confirm-dialog ref="confirmDialog"/>
     <snack-bar ref="snackbar" />
-    <input ref="pictureInput" type="file" style="display: none" :accept="SUPPORTED_IMAGE_EXTENSIONS" @change="uploadPicture($event)" />
+    <input ref="pictureInput" type="file" style="display: none" :accept="SUPPORTED_IMAGE_EXTENSIONS" @change="onUploadPicture($event)" />
 </template>
 
 <script setup lang="ts">
@@ -504,6 +504,8 @@ import type { Coordinate } from '@/core/coordinate.ts';
 import { CategoryType } from '@/core/category.ts';
 import { TransactionType, TransactionEditScopeType, TransactionQuickAddButtonActionType } from '@/core/transaction.ts';
 import { TemplateType, ScheduledTemplateFrequencyType } from '@/core/template.ts';
+import { KnownFileType } from '@/core/file.ts';
+
 import { KnownErrorCode } from '@/consts/api.ts';
 import { SUPPORTED_IMAGE_EXTENSIONS } from '@/consts/file.ts';
 
@@ -529,6 +531,7 @@ import {
 import {
     isSupportGetGeoLocationByClick
 } from '@/lib/map/index.ts';
+import { compressJpgImageByQuality } from '@/lib/ui/common.ts';
 import logger from '@/lib/logger.ts';
 
 import {
@@ -550,6 +553,7 @@ export interface TransactionEditOptions extends SetTransactionOptions {
     template?: TransactionTemplate;
     currentTransaction?: Transaction;
     currentTemplate?: TransactionTemplate;
+    autoUploadPicture?: File;
     noTransactionDraft?: boolean;
 }
 
@@ -585,6 +589,7 @@ const {
     transaction,
     defaultCurrency,
     coordinateDisplayType,
+    imageUploadQualityType,
     allTimezones,
     allVisibleAccounts,
     allVisibleCategorizedAccounts,
@@ -787,6 +792,10 @@ function open(options: TransactionEditOptions): Promise<TransactionEditResponse 
             (transaction.value as TransactionTemplate).fillFrom(template);
         } else {
             setTransactionModel(null, options, true);
+        }
+
+        if (options.autoUploadPicture) {
+            uploadPicture(options.autoUploadPicture);
         }
 
         loading.value = false;
@@ -1081,25 +1090,19 @@ function showOpenPictureDialog(): void {
     pictureInput.value?.click();
 }
 
-function uploadPicture(event: Event): void {
-    if (!event || !event.target) {
+function uploadPicture(file: File): void {
+    if (!file) {
         return;
     }
-
-    const el = event.target as HTMLInputElement;
-
-    if (!el.files || !el.files.length || !el.files[0]) {
-        return;
-    }
-
-    const pictureFile = el.files[0] as File;
-
-    el.value = '';
 
     uploadingPicture.value = true;
     submitting.value = true;
 
-    transactionsStore.uploadTransactionPicture({ pictureFile }).then(response => {
+    compressJpgImageByQuality(file, imageUploadQualityType.value).then(blob => {
+        return transactionsStore.uploadTransactionPicture({
+            pictureFile: KnownFileType.JPG.createFileFromBlob(blob, "image")
+        });
+    }).then(response => {
         transaction.value.addPicture(response);
         uploadingPicture.value = false;
         submitting.value = false;
@@ -1145,6 +1148,23 @@ function viewOrRemovePicture(pictureInfo: TransactionPictureInfoBasicResponse): 
 
 function onSavingTag(state: boolean): void {
     submitting.value = state;
+}
+
+function onUploadPicture(event: Event): void {
+    if (!event || !event.target) {
+        return;
+    }
+
+    const el = event.target as HTMLInputElement;
+
+    if (!el.files || !el.files.length || !el.files[0]) {
+        return;
+    }
+
+    const pictureFile = el.files[0] as File;
+
+    el.value = '';
+    uploadPicture(pictureFile);
 }
 
 function onShowDateTimeError(error: string): void {

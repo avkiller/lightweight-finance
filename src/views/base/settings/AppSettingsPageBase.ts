@@ -26,6 +26,7 @@ export function useAppSettingPageBase() {
         getAllTimezones,
         getAllTimezoneTypesUsedForStatistics,
         getAllCurrencySortingTypes,
+        getAllImageUploadQualityTypes,
         setTimeZone
     } = useI18n();
 
@@ -59,6 +60,8 @@ export function useAppSettingPageBase() {
             { name: tt('Always Show Confirmation'), value: 'confirmation' }
         ];
     });
+
+    const allImageUploadQualityTypes = computed<TypeAndDisplayName[]>(() => getAllImageUploadQualityTypes());
 
     const allReconciliationStatementDateRanges = computed(() => getAllDateRanges(DateRangeScene.Normal, {
         includeCustom: true,
@@ -133,6 +136,16 @@ export function useAppSettingPageBase() {
     const isAutoGetCurrentGeoLocation = computed<boolean>({
         get: () => settingsStore.appSettings.autoGetCurrentGeoLocation,
         set: (value) => settingsStore.setAutoGetCurrentGeoLocation(value)
+    });
+
+    const transactionPictureQuality = computed<number>({
+        get: () => settingsStore.appSettings.transactionPictureQuality,
+        set: (value: number) => settingsStore.setTransactionPictureQuality(value)
+    });
+
+    const isAutoUploadTransactionPictureForAIRecognition = computed<boolean>({
+        get: () => settingsStore.appSettings.autoUploadTransactionPictureForAIRecognition,
+        set: (value: boolean) => settingsStore.setAutoUploadTransactionPictureForAIRecognition(value)
     });
 
     const currencySortByInExchangeRatesPage = computed<number>({
@@ -253,12 +266,15 @@ export function useAppSettingPageBase() {
         allTimezoneTypesUsedForStatistics,
         allCurrencySortingTypes,
         allAutoSaveTransactionDraftTypes,
+        allImageUploadQualityTypes,
         allReconciliationStatementDateRanges,
         timeZone,
         hasAnyAccount,
         hasAnyVisibleAccount,
         hasAnyTransactionCategory,
         isAutoUpdateExchangeRatesData,
+        transactionPictureQuality,
+        isAutoUploadTransactionPictureForAIRecognition,
         showAccountBalance,
         showAmountInHomePage,
         itemsCountInTransactionListPage,

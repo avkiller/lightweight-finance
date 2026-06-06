@@ -1,6 +1,7 @@
 import { type WeekDayValue, WeekDay } from './datetime.ts';
 import { TimezoneTypeForStatistics } from './timezone.ts';
 import { CurrencySortingType } from './currency.ts';
+import { ImageUploadQualityType } from './image.ts';
 import {
     TransactionQuickSaveButtonStyle,
     TransactionQuickAddButtonActionType
@@ -58,6 +59,9 @@ export interface ApplicationSettings extends BaseApplicationSetting {
     autoSaveTransactionDraft: string;
     autoGetCurrentGeoLocation: boolean;
     alwaysShowTransactionPicturesInMobileTransactionEditPage: boolean;
+    transactionPictureQuality: number;
+    // AI Image Recognition
+    autoUploadTransactionPictureForAIRecognition: boolean;
     // Import Transaction Dialog
     rememberLastSelectedFileTypeInImportTransactionDialog: boolean;
     lastSelectedFileTypeInImportTransactionDialog: string;
@@ -138,6 +142,9 @@ export const ALL_ALLOWED_CLOUD_SYNC_APP_SETTING_KEY_TYPES: Record<string, UserAp
     'autoSaveTransactionDraft': UserApplicationCloudSettingType.String,
     'autoGetCurrentGeoLocation': UserApplicationCloudSettingType.Boolean,
     'alwaysShowTransactionPicturesInMobileTransactionEditPage': UserApplicationCloudSettingType.Boolean,
+    'transactionPictureQuality': UserApplicationCloudSettingType.Number,
+    // AI Image Recognition
+    'autoUploadTransactionPictureForAIRecognition': UserApplicationCloudSettingType.Boolean,
     // Import Transaction Dialog
     'rememberLastSelectedFileTypeInImportTransactionDialog': UserApplicationCloudSettingType.Boolean,
     'lastSelectedFileTypeInImportTransactionDialog': UserApplicationCloudSettingType.String,
@@ -200,6 +207,9 @@ export const DEFAULT_APPLICATION_SETTINGS: ApplicationSettings = {
     autoSaveTransactionDraft: 'disabled',
     autoGetCurrentGeoLocation: false,
     alwaysShowTransactionPicturesInMobileTransactionEditPage: false,
+    transactionPictureQuality: ImageUploadQualityType.Default.type,
+    // AI Image Recognition
+    autoUploadTransactionPictureForAIRecognition: false,
     // Import Transaction Dialog
     rememberLastSelectedFileTypeInImportTransactionDialog: true,
     lastSelectedFileTypeInImportTransactionDialog: '',
