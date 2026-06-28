@@ -9,6 +9,7 @@ import { useTransactionTagsStore } from './transactionTag.ts';
 import { useExchangeRatesStore } from './exchangeRates.ts';
 
 import { type BeforeResolveFunction, itemAndIndex, keys, values } from '@/core/base.ts';
+import { NormalizedText } from '@/core/text.ts';
 import { NumeralSystem, AmountFilterType } from '@/core/numeral.ts';
 import { type DateTime, DateRangeScene, DateRange } from '@/core/datetime.ts';
 import { TimezoneTypeForStatistics } from '@/core/timezone.ts';
@@ -181,15 +182,29 @@ export const useExplorersStore = defineStore('explorers', () => {
     })();
 
     function buildInsightsExplorerMatchContext(insightsExplorer: InsightsExplorer, transaction: TransactionInsightDataItem): InsightsExplorerMatchContext {
+        let cachedTransactionDateTime: DateTime | undefined = undefined;
+        let cachedNormalizedDescription: NormalizedText | undefined = undefined;
+
         return {
             getTransactionDateTime(): DateTime {
-                let transactionTimeUtfOffset: number | undefined = undefined;
+                if (!cachedTransactionDateTime) {
+                    let transactionTimeUtfOffset: number | undefined = undefined;
 
-                if (insightsExplorer.timezoneUsedForDateRange === TimezoneTypeForStatistics.TransactionTimezone.type) {
-                    transactionTimeUtfOffset = transaction.utcOffset;
+                    if (insightsExplorer.timezoneUsedForDateRange === TimezoneTypeForStatistics.TransactionTimezone.type) {
+                        transactionTimeUtfOffset = transaction.utcOffset;
+                    }
+
+                    cachedTransactionDateTime = isDefined(transactionTimeUtfOffset) ? parseDateTimeFromUnixTimeWithTimezoneOffset(transaction.time, transactionTimeUtfOffset) : parseDateTimeFromUnixTime(transaction.time);
                 }
 
-                return isDefined(transactionTimeUtfOffset) ? parseDateTimeFromUnixTimeWithTimezoneOffset(transaction.time, transactionTimeUtfOffset) : parseDateTimeFromUnixTime(transaction.time);
+                return cachedTransactionDateTime;
+            },
+            getNormalizedDescription(): NormalizedText {
+                if (!cachedNormalizedDescription) {
+                    cachedNormalizedDescription = NormalizedText.of(transaction.comment ? transaction.comment : '');
+                }
+
+                return cachedNormalizedDescription;
             }
         };
     }
@@ -599,14 +614,14 @@ export const useExplorersStore = defineStore('explorers', () => {
                 categoryName: transaction.primaryCategory.name,
                 categoryId: transaction.primaryCategory.id,
                 categoryIdType: TransactionExplorerDimensionType.Category,
-                categoryDisplayOrders: [transaction.primaryCategory.displayOrder]
+                categoryDisplayOrders: [transaction.primaryCategory.type, transaction.primaryCategory.displayOrder]
             };
         } else if (dimension === TransactionExplorerDataDimension.SecondaryCategory) {
             return {
                 categoryName: transaction.secondaryCategory.name,
                 categoryId: transaction.categoryId,
                 categoryIdType: TransactionExplorerDimensionType.Category,
-                categoryDisplayOrders: [transaction.primaryCategory.displayOrder, transaction.secondaryCategory.displayOrder]
+                categoryDisplayOrders: [transaction.primaryCategory.type, transaction.primaryCategory.displayOrder, transaction.secondaryCategory.displayOrder]
             };
         } else if (dimension === TransactionExplorerDataDimension.SourceAmount || dimension === TransactionExplorerDataDimension.DestinationAmount) {
             if (dimension === TransactionExplorerDataDimension.DestinationAmount && transaction.type !== TransactionType.Transfer) {

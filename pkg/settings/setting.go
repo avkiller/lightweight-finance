@@ -2,6 +2,7 @@ package settings
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -172,6 +173,7 @@ const (
 	defaultDuplicateSubmissionsInterval            uint32 = 300 // 5 minutes
 
 	defaultSecretKey                     string = "ezbookkeeping"
+	defaultTrustedProxyIPs               string = "10.0.0.0/8,169.254.0.0/16,127.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
 	defaultTokenExpiredTime              uint32 = 2592000 // 30 days
 	defaultTokenMinRefreshInterval       uint32 = 86400   // 1 day
 	defaultTemporaryTokenExpiredTime     uint32 = 300     // 5 minutes
@@ -336,8 +338,12 @@ type Config struct {
 	WebDAVConfig        *WebDAVConfig
 
 	// Large Language Model
+	TransactionFromAITextRecognition  bool
 	TransactionFromAIImageRecognition bool
 	MaxAIRecognitionPictureFileSize   uint32
+
+	// Large Language Model for Transaction Text Recognition
+	TextRecognitionLLMConfig *LLMConfig
 
 	// Large Language Model for Receipt Image Recognition
 	ReceiptImageRecognitionLLMConfig *LLMConfig
@@ -361,6 +367,8 @@ type Config struct {
 	// Secret
 	SecretKeyNoSet                        bool
 	SecretKey                             string
+	TrustedProxyIPs                       []*net.IPNet
+	TrustedProxyTextualIPs                []string
 	TokenExpiredTime                      uint32
 	TokenExpiredTimeDuration              time.Duration
 	TokenMinRefreshInterval               uint32
@@ -510,6 +518,12 @@ func LoadConfiguration(configFilePath string) (*Config, error) {
 	}
 
 	err = loadLLMGlobalConfiguration(config, cfgFile, "llm")
+
+	if err != nil {
+		return nil, err
+	}
+
+	config.TextRecognitionLLMConfig, err = loadLLMConfiguration(cfgFile, "llm_text_recognition")
 
 	if err != nil {
 		return nil, err
@@ -844,6 +858,7 @@ func loadStorageConfiguration(config *Config, configFile *ini.File, sectionName 
 }
 
 func loadLLMGlobalConfiguration(config *Config, configFile *ini.File, sectionName string) error {
+	config.TransactionFromAITextRecognition = getConfigItemBoolValue(configFile, sectionName, "transaction_from_ai_text_recognition", false)
 	config.TransactionFromAIImageRecognition = getConfigItemBoolValue(configFile, sectionName, "transaction_from_ai_image_recognition", false)
 	config.MaxAIRecognitionPictureFileSize = getConfigItemUint32Value(configFile, sectionName, "max_ai_recognition_picture_size", defaultAIRecognitionPictureMaxSize)
 
@@ -966,6 +981,11 @@ func loadSecurityConfiguration(config *Config, configFile *ini.File, sectionName
 
 	config.SecretKeyNoSet = !getConfigItemIsSet(configFile, sectionName, "secret_key")
 	config.SecretKey = getConfigItemStringValue(configFile, sectionName, "secret_key", defaultSecretKey)
+	config.TrustedProxyIPs, config.TrustedProxyTextualIPs, err = getCIDRList(configFile, sectionName, "trusted_proxy_ips", defaultTrustedProxyIPs)
+
+	if err != nil {
+		return err
+	}
 
 	config.TokenExpiredTime = getConfigItemUint32Value(configFile, sectionName, "token_expired_time", defaultTokenExpiredTime)
 
@@ -1280,6 +1300,37 @@ func getIPPatterns(configFile *ini.File, sectionName string, itemName string, de
 	}
 
 	return ipPatterns, nil
+}
+
+func getCIDRList(configFile *ini.File, sectionName string, itemName string, defaultValue string) ([]*net.IPNet, []string, error) {
+	configValue := getConfigItemStringValue(configFile, sectionName, itemName, defaultValue)
+
+	if configValue == "" {
+		return nil, nil, nil
+	}
+
+	cidrs := strings.Split(configValue, ",")
+	parsedCIDRs := make([]*net.IPNet, 0, len(cidrs))
+	textualCIDRs := make([]string, 0, len(cidrs))
+
+	for i := 0; i < len(cidrs); i++ {
+		cidr := strings.TrimSpace(cidrs[i])
+
+		if cidr == "" {
+			continue
+		}
+
+		_, parsedCIDR, err := net.ParseCIDR(cidr)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		parsedCIDRs = append(parsedCIDRs, parsedCIDR)
+		textualCIDRs = append(textualCIDRs, parsedCIDR.String())
+	}
+
+	return parsedCIDRs, textualCIDRs, nil
 }
 
 func getMultiLanguageContentConfig(configFile *ini.File, sectionName string, enableKey string, contentKey string) MultiLanguageContentConfig {

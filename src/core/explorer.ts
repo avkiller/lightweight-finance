@@ -40,7 +40,9 @@ export enum TransactionExplorerConditionFieldType {
     GeoLocation = 'geoLocation',
     TransactionTag = 'transactionTag',
     Pictures = 'pictures',
-    Description = 'description'
+    Description = 'description',
+    DescriptionCaseInsensitive = 'descriptionCaseInsensitive',
+    DescriptionNormalized = 'descriptionNormalized'
 }
 
 export class TransactionExplorerConditionField implements NameValue {
@@ -61,7 +63,9 @@ export class TransactionExplorerConditionField implements NameValue {
     public static readonly GeoLocation = new TransactionExplorerConditionField('Geographic Location', TransactionExplorerConditionFieldType.GeoLocation);
     public static readonly TransactionTag = new TransactionExplorerConditionField('Tags', TransactionExplorerConditionFieldType.TransactionTag);
     public static readonly Pictures = new TransactionExplorerConditionField('Pictures', TransactionExplorerConditionFieldType.Pictures);
-    public static readonly Description = new TransactionExplorerConditionField('Description', TransactionExplorerConditionFieldType.Description);
+    public static readonly Description = new TransactionExplorerConditionField('Description (Exact)', TransactionExplorerConditionFieldType.Description);
+    public static readonly DescriptionCaseInsensitive = new TransactionExplorerConditionField('Description (Ignore Case)', TransactionExplorerConditionFieldType.DescriptionCaseInsensitive);
+    public static readonly DescriptionNormalized = new TransactionExplorerConditionField('Description (Normalized)', TransactionExplorerConditionFieldType.DescriptionNormalized);
 
     public readonly name: string;
     public readonly value: TransactionExplorerConditionFieldType;

@@ -10,12 +10,14 @@
         "dshemin",
         "lucdsouza",
         "OuIChien",
-        "RasterCrow"
+        "RasterCrow",
+        "vjsai"
     ],
     "translators": {
         "de": [
             "chrgm",
-            "1270o1"
+            "1270o1",
+            "martinschilliger"
         ],
         "en": [],
         "es": [
@@ -46,6 +48,9 @@
             "thecodergus",
             "balaios"
         ],
+        "ro": [
+            "gg64nou"
+        ],
         "ru": [
             "artegoser",
             "dshemin"
@@ -60,11 +65,13 @@
             "natthavat28"
         ],
         "tr": [
-            "aydnykn"
+            "aydnykn",
+            "snizamaddinov"
         ],
         "uk": [
             "nktlitvinenko",
-            "grid-pilot"
+            "grid-pilot",
+            "infinit1ve"
         ],
         "vi": [
             "f97"

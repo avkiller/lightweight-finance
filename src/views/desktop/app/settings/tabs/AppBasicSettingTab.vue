@@ -184,6 +184,17 @@
                                     v-model="showTagInTransactionListPage"
                                 />
                             </v-col>
+                            <v-col cols="12" md="6">
+                                <v-select
+                                    item-title="displayName"
+                                    item-value="type"
+                                    persistent-placeholder
+                                    :label="tt('Default Keyword Search Matching Mode')"
+                                    :placeholder="tt('Default Keyword Search Matching Mode')"
+                                    :items="allKeywordMatchModes"
+                                    v-model="defaultKeywordMatchModeInTransactionListPage"
+                                />
+                            </v-col>
                         </v-row>
                     </v-card-text>
                 </v-form>
@@ -228,6 +239,28 @@
                                     :placeholder="tt('Transaction Picture Upload Quality')"
                                     :items="allImageUploadQualityTypes"
                                     v-model="transactionPictureQuality"
+                                />
+                            </v-col>
+                        </v-row>
+                    </v-card-text>
+                </v-form>
+            </v-card>
+        </v-col>
+
+        <v-col cols="12">
+            <v-card :title="tt('AI Clipboard Text Recognition')">
+                <v-form>
+                    <v-card-text>
+                        <v-row>
+                            <v-col cols="12" md="6">
+                                <v-select
+                                    item-title="displayName"
+                                    item-value="value"
+                                    persistent-placeholder
+                                    :label="tt('Always Require Confirmation of Clipboard Content Before Submission')"
+                                    :placeholder="tt('Always Require Confirmation of Clipboard Content Before Submission')"
+                                    :items="enableDisableOptions"
+                                    v-model="isAlwaysRequireConfirmationOfClipboardContentBeforeSubmission"
                                 />
                             </v-col>
                         </v-row>
@@ -454,6 +487,7 @@ const {
     allTimezones,
     allTimezoneTypesUsedForStatistics,
     allCurrencySortingTypes,
+    allKeywordMatchModes,
     allAutoSaveTransactionDraftTypes,
     allImageUploadQualityTypes,
     allReconciliationStatementDateRanges,
@@ -468,9 +502,11 @@ const {
     timezoneUsedForStatisticsInHomePage,
     showTotalAmountInTransactionListPage,
     showTagInTransactionListPage,
+    defaultKeywordMatchModeInTransactionListPage,
     autoSaveTransactionDraft,
     isAutoGetCurrentGeoLocation,
     transactionPictureQuality,
+    isAlwaysRequireConfirmationOfClipboardContentBeforeSubmission,
     isAutoUploadTransactionPictureForAIRecognition,
     currencySortByInExchangeRatesPage,
     accountsIncludedInHomePageOverviewDisplayContent,

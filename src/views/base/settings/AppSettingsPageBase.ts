@@ -26,6 +26,7 @@ export function useAppSettingPageBase() {
         getAllTimezones,
         getAllTimezoneTypesUsedForStatistics,
         getAllCurrencySortingTypes,
+        getAllKeywordMatchModes,
         getAllImageUploadQualityTypes,
         setTimeZone
     } = useI18n();
@@ -52,6 +53,7 @@ export function useAppSettingPageBase() {
     const allTimezones = computed<LocalizedTimezoneInfo[]>(() => getAllTimezones(getCurrentUnixTime(), true));
     const allTimezoneTypesUsedForStatistics = computed<TypeAndDisplayName[]>(() => getAllTimezoneTypesUsedForStatistics());
     const allCurrencySortingTypes = computed<TypeAndDisplayName[]>(() => getAllCurrencySortingTypes());
+    const allKeywordMatchModes = computed<TypeAndDisplayName[]>(() => getAllKeywordMatchModes());
 
     const allAutoSaveTransactionDraftTypes = computed<NameValue[]>(() => {
         return [
@@ -117,6 +119,11 @@ export function useAppSettingPageBase() {
         set: (value) => settingsStore.setShowTagInTransactionListPage(value)
     });
 
+    const defaultKeywordMatchModeInTransactionListPage = computed<number>({
+        get: () => settingsStore.appSettings.defaultKeywordMatchModeInTransactionListPage,
+        set: (value: number) => settingsStore.setDefaultKeywordMatchModeInTransactionListPage(value)
+    });
+
     const itemsCountInTransactionListPage = computed<number>({
         get: () => settingsStore.appSettings.itemsCountInTransactionListPage,
         set: (value) => settingsStore.setItemsCountInTransactionListPage(value)
@@ -141,6 +148,11 @@ export function useAppSettingPageBase() {
     const transactionPictureQuality = computed<number>({
         get: () => settingsStore.appSettings.transactionPictureQuality,
         set: (value: number) => settingsStore.setTransactionPictureQuality(value)
+    });
+
+    const isAlwaysRequireConfirmationOfClipboardContentBeforeSubmission = computed<boolean>({
+        get: () => settingsStore.appSettings.alwaysRequireConfirmationOfClipboardContentBeforeSubmission,
+        set: (value: boolean) => settingsStore.setAlwaysRequireConfirmationOfClipboardContentBeforeSubmission(value)
     });
 
     const isAutoUploadTransactionPictureForAIRecognition = computed<boolean>({
@@ -265,6 +277,7 @@ export function useAppSettingPageBase() {
         allTimezones,
         allTimezoneTypesUsedForStatistics,
         allCurrencySortingTypes,
+        allKeywordMatchModes,
         allAutoSaveTransactionDraftTypes,
         allImageUploadQualityTypes,
         allReconciliationStatementDateRanges,
@@ -274,6 +287,7 @@ export function useAppSettingPageBase() {
         hasAnyTransactionCategory,
         isAutoUpdateExchangeRatesData,
         transactionPictureQuality,
+        isAlwaysRequireConfirmationOfClipboardContentBeforeSubmission,
         isAutoUploadTransactionPictureForAIRecognition,
         showAccountBalance,
         showAmountInHomePage,
@@ -281,6 +295,7 @@ export function useAppSettingPageBase() {
         timezoneUsedForStatisticsInHomePage,
         showTotalAmountInTransactionListPage,
         showTagInTransactionListPage,
+        defaultKeywordMatchModeInTransactionListPage,
         autoSaveTransactionDraft,
         isAutoGetCurrentGeoLocation,
         currencySortByInExchangeRatesPage,
