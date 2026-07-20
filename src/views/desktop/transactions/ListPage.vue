@@ -165,6 +165,9 @@
                                                 </span>
                                                 <span class="text-income ms-2" v-else-if="!loading">
                                                     {{ currentMonthTotalAmount.income }}
+                                                    <v-tooltip activator="parent" v-if="!currentMonthTotalAmount.incomeIsZero && currentMonthTotalAmount.incomeInDefaultCurrency !== currentMonthTotalAmount.income">
+                                                        <span>{{ currentMonthTotalAmount.incomeInDefaultCurrency }}</span>
+                                                    </v-tooltip>
                                                 </span>
                                                 <span class="text-subtitle-1 ms-3">{{ queryAllFilterAccountIdsCount ? tt('Total Outflows') : tt('Total Expense') }}</span>
                                                 <span class="text-expense ms-2" v-if="loading">
@@ -172,6 +175,9 @@
                                                 </span>
                                                 <span class="text-expense ms-2" v-else-if="!loading">
                                                     {{ currentMonthTotalAmount.expense }}
+                                                    <v-tooltip activator="parent" v-if="!currentMonthTotalAmount.expenseIsZero && currentMonthTotalAmount.expenseInDefaultCurrency !== currentMonthTotalAmount.expense">
+                                                        <span>{{ currentMonthTotalAmount.expenseInDefaultCurrency }}</span>
+                                                    </v-tooltip>
                                                 </span>
                                             </div>
                                         </div>
@@ -180,7 +186,7 @@
                                     <v-card-text class="transaction-calendar-container pt-0" v-if="pageType === TransactionListPageType.Calendar.type">
                                         <transaction-calendar day-has-transaction-class="font-weight-bold"
                                                               :readonly="loading" :is-dark-mode="isDarkMode"
-                                                              :default-currency="defaultCurrency"
+                                                              :default-currency="selectedAccountDefaultCurrency"
                                                               :min-date="transactionCalendarMinDate"
                                                               :max-date="transactionCalendarMaxDate"
                                                               :dailyTotalAmounts="currentMonthTransactionData?.dailyTotalAmounts"
@@ -359,12 +365,12 @@
                                                                         <span class="text-sm ms-3">{{ tt(filterType.name) }}</span>
                                                                         <span class="text-sm ms-4" v-if="query.amountFilter && query.amountFilter.startsWith(`${filterType.type}:`) && currentAmountFilterType !== filterType.type">{{ queryAmount }}</span>
                                                                         <amount-input class="transaction-amount-filter-value ms-4" density="compact"
-                                                                                      :currency="defaultCurrency"
+                                                                                      :currency="selectedAccountDefaultCurrency"
                                                                                       v-model="currentAmountFilterValue1"
                                                                                       v-if="currentAmountFilterType === filterType.type"/>
                                                                         <span class="ms-2 me-2" v-if="currentAmountFilterType === filterType.type && filterType.paramCount === 2">~</span>
                                                                         <amount-input class="transaction-amount-filter-value" density="compact"
-                                                                                      :currency="defaultCurrency"
+                                                                                      :currency="selectedAccountDefaultCurrency"
                                                                                       v-model="currentAmountFilterValue2"
                                                                                       v-if="currentAmountFilterType === filterType.type && filterType.paramCount === 2"/>
                                                                         <v-btn class="ms-2" density="compact" color="primary" variant="tonal"
@@ -545,7 +551,7 @@
                                                     </div>
                                                 </td>
                                             </tr>
-                                            <tr class="transaction-table-row-data text-sm cursor-pointer"
+                                            <tr class="transaction-table-row-data cursor-pointer"
                                                 @click="show(transaction)">
                                                 <td class="transaction-table-column-time">
                                                     <div class="d-flex flex-column">
@@ -575,6 +581,9 @@
                                                 <td class="transaction-table-column-amount" :class="{ 'text-expense': transaction.type === TransactionType.Expense, 'text-income': transaction.type === TransactionType.Income }">
                                                     <div v-if="transaction.sourceAccount">
                                                         <span>{{ getDisplayAmount(transaction) }}</span>
+                                                        <v-tooltip activator="parent" v-if="!transaction.hideAmount && getDisplayAmountCurrency(transaction) !== userDefaultCurrency">
+                                                            {{ getDisplayAmount(transaction, true) }}
+                                                        </v-tooltip>
                                                     </div>
                                                 </td>
                                                 <td class="transaction-table-column-account">
@@ -825,8 +834,12 @@ type AIImageRecognitionDialogType = InstanceType<typeof AIImageRecognitionDialog
 type ImportDialogType = InstanceType<typeof ImportDialog>;
 
 interface TransactionListDisplayTotalAmount {
+    incomeIsZero: boolean;
+    expenseIsZero: boolean;
     income: string;
     expense: string;
+    incomeInDefaultCurrency: string;
+    expenseInDefaultCurrency: string;
 }
 
 const router = useRouter();
@@ -848,7 +861,8 @@ const {
     currentCalendarDate,
     firstDayOfWeek,
     fiscalYearStart,
-    defaultCurrency,
+    userDefaultCurrency,
+    selectedAccountDefaultCurrency,
     showTotalAmountInTransactionListPage,
     showTagInTransactionListPage,
     allDateRanges,
@@ -889,6 +903,7 @@ const {
     getDisplayTimezone,
     getDisplayTimeInDefaultTimezone,
     getDisplayAmount,
+    getDisplayAmountCurrency,
     getDisplayMonthTotalAmount,
     getTransactionTypeName,
     getTransactionPictureUrl
@@ -1132,10 +1147,16 @@ const currentMonthTotalAmount = computed<TransactionListDisplayTotalAmount | nul
             return null;
         }
 
-        return {
-            income: getDisplayMonthTotalAmount(transactionData.totalAmount.income, defaultCurrency.value, '', transactionData.totalAmount.incompleteIncome),
-            expense: getDisplayMonthTotalAmount(transactionData.totalAmount.expense, defaultCurrency.value, '', transactionData.totalAmount.incompleteExpense)
+        const displayMonthlyTotalAmount: TransactionListDisplayTotalAmount = {
+            incomeIsZero: transactionData.totalAmount.income === 0,
+            expenseIsZero: transactionData.totalAmount.expense === 0,
+            income: getDisplayMonthTotalAmount(transactionData.totalAmount.income, selectedAccountDefaultCurrency.value, '', transactionData.totalAmount.incompleteIncome),
+            expense: getDisplayMonthTotalAmount(transactionData.totalAmount.expense, selectedAccountDefaultCurrency.value, '', transactionData.totalAmount.incompleteExpense),
+            incomeInDefaultCurrency: getDisplayMonthTotalAmount(transactionData.totalAmount.income, selectedAccountDefaultCurrency.value, '', transactionData.totalAmount.incompleteIncome, true),
+            expenseInDefaultCurrency: getDisplayMonthTotalAmount(transactionData.totalAmount.expense, selectedAccountDefaultCurrency.value, '', transactionData.totalAmount.incompleteExpense, true)
         };
+
+        return displayMonthlyTotalAmount;
     } else {
         return null;
     }
@@ -1271,7 +1292,7 @@ function reload(force: boolean, init: boolean): void {
                 mustHavePictures: isGalleryMode,
                 withPictures: isGalleryMode,
                 autoExpand: true,
-                defaultCurrency: defaultCurrency.value
+                defaultCurrency: selectedAccountDefaultCurrency.value
             });
         } else {
             return transactionsStore.loadTransactions({
@@ -1282,7 +1303,7 @@ function reload(force: boolean, init: boolean): void {
                 withCount: page <= 1,
                 withPictures: isGalleryMode,
                 autoExpand: true,
-                defaultCurrency: defaultCurrency.value
+                defaultCurrency: selectedAccountDefaultCurrency.value
             });
         }
     }).then(data => {

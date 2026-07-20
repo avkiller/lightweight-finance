@@ -1,8 +1,4 @@
 /** Global style **/
-html, body {
-    position: fixed;
-}
-
 body {
     -ms-user-select: none;
     -webkit-user-select: none;
@@ -100,7 +96,6 @@ input[type=number] {
     --f7-fab-extended-text-font-weight: inherit;
     --f7-fab-extended-text-transform: inherit;
     --f7-glass-shadow-fab: var(--f7-glass-shadow);
-    --f7-popup-push-offset: 5px;
     --f7-color-gray: #8e8e93;
     --f7-color-gray-rgb: 142, 142, 147;
     --f7-color-gray-shade: #79797f;
@@ -120,6 +115,24 @@ input[type=number] {
     --f7-theme-color-rgb: var(--f7-color-gray-rgb);
     --f7-theme-color-shade: var(--f7-color-gray-shade);
     --f7-theme-color-tint: var(--f7-color-gray-tint);
+}
+
+:root {
+    --f7-navbar-height: 60px;
+}
+
+.ios .navbar-inner {
+    padding-top: calc(8px + var(--f7-safe-area-top));
+    padding-bottom: 8px;
+}
+
+.ios .subnavbar {
+    padding-top: calc(var(--f7-typography-margin) / 2);
+}
+
+.ios .subnav-segmented-bar {
+    margin-top: 0;
+    margin-bottom: calc(var(--f7-typography-margin) / 2);
 }
 
 .ios .dark, .ios.dark {
@@ -196,6 +209,10 @@ i.icon.la, i.icon.las, i.icon.lab {
 
 .compact-tabbar {
     --f7-toolbar-height: 48px;
+}
+
+.ebk-extra-small-amount {
+    --f7-list-item-title-font-size: var(--ebk-amount-extra-small-font-size) !important;
 }
 
 .ebk-small-amount {
