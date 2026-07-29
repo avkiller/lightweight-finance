@@ -302,14 +302,25 @@
             </div>
         </template>
         <template #item.comment="{ item }">
-            <span v-if="editingTransaction !== item">{{ item.comment || '' }}</span>
+            <template v-if="editingTransaction !== item">
+                <span v-if="!item.comment || item.comment.length <= TRANSACTION_MAX_COMMENT_LENGTH">{{ item.comment || '' }}</span>
+                <div class="text-error font-italic" v-else-if="item.comment && item.comment.length > TRANSACTION_MAX_COMMENT_LENGTH">
+                    <v-tooltip activator="parent">{{ getTransactionDescriptionTooltip(item) }}</v-tooltip>
+                    <v-icon class="me-1" :icon="mdiAlertOutline"/>
+                    <span>{{ item.comment }}</span>
+                </div>
+            </template>
             <div v-if="editingTransaction === item">
-                <v-text-field style="width: 200px" type="text"
+                <v-text-field style="width: calc(max(300px, 100%))" type="text"
                               density="compact" variant="plain"
                               persistent-placeholder
                               :placeholder="tt('Description')"
                               :disabled="!!disabled"
-                              v-model="item.comment" />
+                              v-model="item.comment">
+                    <v-tooltip activator="parent" v-if="item.comment && item.comment.length > TRANSACTION_MAX_COMMENT_LENGTH">
+                        {{ getTransactionDescriptionTooltip(item) }}
+                    </v-tooltip>
+                </v-text-field>
             </div>
         </template>
         <template #bottom>
@@ -428,6 +439,8 @@ import { TransactionType } from '@/core/transaction.ts';
 import { KnownFileType } from '@/core/file.ts';
 import { ImportTransactionColumnType } from '@/core/import_transaction.ts';
 
+import { TRANSACTION_MAX_COMMENT_LENGTH } from '@/consts/transaction.ts';
+
 import { Account, type CategorizedAccountWithDisplayBalance } from '@/models/account.ts';
 import type { TransactionCategory } from '@/models/transaction_category.ts';
 import { TransactionTag } from '@/models/transaction_tag.ts';
@@ -439,6 +452,7 @@ import {
     replaceAll,
     objectFieldToArrayItem
 } from '@/lib/common.ts';
+import { parseBigDecimal } from '@/lib/numeral.ts';
 import {
     getUtcOffsetByUtcOffsetMinutes,
     getTimezoneOffsetMinutes,
@@ -1392,7 +1406,7 @@ function getTransactionDestinationAccountCurrency(transaction: ImportTransaction
 
 function getTransactionDisplayAmount(transaction: ImportTransaction): string {
     const currency = getTransactionSourceAccountCurrency(transaction);
-    return formatAmountToLocalizedNumeralsWithCurrency(transaction.sourceAmount, currency);
+    return formatAmountToLocalizedNumeralsWithCurrency(parseBigDecimal(transaction.sourceAmount), currency);
 }
 
 function getTransactionDisplayDestinationAmount(transaction: ImportTransaction): string {
@@ -1401,7 +1415,7 @@ function getTransactionDisplayDestinationAmount(transaction: ImportTransaction):
     }
 
     const currency = getTransactionDestinationAccountCurrency(transaction);
-    return formatAmountToLocalizedNumeralsWithCurrency(transaction.destinationAmount, currency);
+    return formatAmountToLocalizedNumeralsWithCurrency(parseBigDecimal(transaction.destinationAmount), currency);
 }
 
 function getTransactionDisplaySourceAmountInDefaultCurrency(transaction: ImportTransaction): string {
@@ -1411,8 +1425,8 @@ function getTransactionDisplaySourceAmountInDefaultCurrency(transaction: ImportT
         return getTransactionDisplayAmount(transaction);
     }
 
-    const amount = exchangeRatesStore.getExchangedAmount(transaction.sourceAmount, currency, defaultCurrency.value);
-    return isNumber(amount) ? formatAmountToLocalizedNumeralsWithCurrency(Math.trunc(amount), defaultCurrency.value) : getTransactionDisplayAmount(transaction);
+    const amount = exchangeRatesStore.getExchangedAmount(parseBigDecimal(transaction.sourceAmount), currency, defaultCurrency.value);
+    return amount ? formatAmountToLocalizedNumeralsWithCurrency(amount.truncate(), defaultCurrency.value) : getTransactionDisplayAmount(transaction);
 }
 
 function getTransactionDisplayDestinationAmountInDefaultCurrency(transaction: ImportTransaction): string {
@@ -1422,8 +1436,8 @@ function getTransactionDisplayDestinationAmountInDefaultCurrency(transaction: Im
         return getTransactionDisplayDestinationAmount(transaction);
     }
 
-    const amount = exchangeRatesStore.getExchangedAmount(transaction.destinationAmount, currency, defaultCurrency.value);
-    return isNumber(amount) ? formatAmountToLocalizedNumeralsWithCurrency(Math.trunc(amount), defaultCurrency.value) : getTransactionDisplayDestinationAmount(transaction);
+    const amount = exchangeRatesStore.getExchangedAmount(parseBigDecimal(transaction.destinationAmount), currency, defaultCurrency.value);
+    return amount ? formatAmountToLocalizedNumeralsWithCurrency(amount.truncate(), defaultCurrency.value) : getTransactionDisplayDestinationAmount(transaction);
 }
 
 function getSourceAccountTitle(transaction: ImportTransaction): string {
@@ -1543,6 +1557,16 @@ function getCurrentInvalidTagNames(): NameValue[] {
     }
 
     return invalidTags;
+}
+
+function getTransactionDescriptionTooltip(transaction: ImportTransaction): string {
+    if (transaction.comment && transaction.comment.length > TRANSACTION_MAX_COMMENT_LENGTH) {
+        return tt('format.misc.charactersOverLimit', {
+            count: formatNumberToLocalizedNumerals(transaction.comment.length - TRANSACTION_MAX_COMMENT_LENGTH)
+        });
+    } else {
+        return '';
+    }
 }
 
 function getAllOriginalTagNames(): NameValue[] {
@@ -2226,7 +2250,7 @@ function exportData(fileType: KnownFileType): void {
         const type = getDisplayTransactionType(transaction);
         const accountName = transaction.sourceAccountId && transaction.sourceAccountId !== '0' && allAccountsMap.value[transaction.sourceAccountId] ? (allAccountsMap.value[transaction.sourceAccountId]?.name ?? transaction.originalSourceAccountName) : transaction.originalSourceAccountName;
         const amountCurrency = transaction.sourceAccountId && transaction.sourceAccountId !== '0' && allAccountsMap.value[transaction.sourceAccountId] ? (allAccountsMap.value[transaction.sourceAccountId]?.currency ?? transaction.originalSourceAccountCurrency) : transaction.originalSourceAccountCurrency;
-        const amount = formatAmountToWesternArabicNumeralsWithoutDigitGrouping(transaction.sourceAmount, amountCurrency);
+        const amount = formatAmountToWesternArabicNumeralsWithoutDigitGrouping(parseBigDecimal(transaction.sourceAmount), amountCurrency);
         const geographicLocation = transaction.geoLocation ? `${transaction.geoLocation.longitude} ${transaction.geoLocation.latitude}` : '';
         let categoryName = transaction.categoryId && transaction.categoryId !== '0' && allCategoriesMap.value[transaction.categoryId] ? (allCategoriesMap.value[transaction.categoryId]?.name ?? transaction.originalCategoryName) : transaction.originalCategoryName;
         let relatedAccountName: string | undefined = undefined;
@@ -2238,7 +2262,7 @@ function exportData(fileType: KnownFileType): void {
         } else if (transaction.type === TransactionType.Transfer) {
             relatedAccountName = transaction.destinationAccountId && transaction.destinationAccountId !== '0' && allAccountsMap.value[transaction.destinationAccountId] ? (allAccountsMap.value[transaction.destinationAccountId]?.name ?? transaction.originalDestinationAccountName) : transaction.originalDestinationAccountName;
             relatedAccountCurrency = transaction.destinationAccountId && transaction.destinationAccountId !== '0' && allAccountsMap.value[transaction.destinationAccountId] ? (allAccountsMap.value[transaction.destinationAccountId]?.currency ?? transaction.originalDestinationAccountCurrency) : transaction.originalDestinationAccountCurrency;
-            relatedAmount = formatAmountToWesternArabicNumeralsWithoutDigitGrouping(transaction.destinationAmount, relatedAccountCurrency);
+            relatedAmount = formatAmountToWesternArabicNumeralsWithoutDigitGrouping(parseBigDecimal(transaction.destinationAmount), relatedAccountCurrency);
         }
 
         const tagNames: string[] = [];
@@ -2328,10 +2352,23 @@ defineExpose({
     }
 }
 
-.import-transaction-table .v-autocomplete.v-input.v-input--density-compact:not(.v-textarea) .v-field__input,
-.import-transaction-table .v-select.v-input.v-input--density-compact:not(.v-textarea) .v-field__input {
-    min-height: inherit;
-    padding-top: 4px;
+.import-transaction-table .v-text-field.v-input.v-input--density-compact:not(.v-textarea),
+.import-transaction-table .v-autocomplete.v-input.v-input--density-compact:not(.v-textarea),
+.import-transaction-table .v-select.v-input.v-input--density-compact:not(.v-textarea) {
+    .v-field__input {
+        min-height: inherit;
+        padding-top: 4px;
+    }
+}
+
+.import-transaction-table .amount-input.v-input.v-input--density-compact {
+    .v-field__prepend-inner {
+        padding-top: 3px;
+    }
+
+    .v-field__input {
+        padding-inline-start: 0.2rem;
+    }
 }
 
 .import-transaction-table .v-chip.transaction-tag {
