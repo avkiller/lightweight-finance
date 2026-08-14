@@ -1,46 +1,51 @@
 <template>
-    <v-data-table
-        fixed-header
-        fixed-footer
-        density="compact"
-        item-value="index"
-        :class="{ 'import-transaction-table': true, 'disabled': !!disabled }"
-        :height="parsedFileLinesTableHeight"
-        :disable-sort="true"
-        :headers="parsedFileLinesHeaders"
-        :items="parsedFileLines"
-        :hover="true"
-        :no-data-text="tt('No data to import')"
-        v-model:items-per-page="countPerPage"
-        v-model:page="currentPage"
-    >
-        <template #headers="{ columns }">
-            <tr>
-                <th class="text-no-wrap" :key="column.key ?? undefined" v-for="column in columns">
-                    <span v-if="!column.key || column.key === 'index'">{{ column.title }}</span>
-                    <div class="py-1" v-if="column.key && column.key !== 'index'">
-                        <span>{{ getParseDataMappedColumnDisplayName(parseInt(column.key)) }}</span>
-                        <br/>
-                        <span>({{ column.title }})</span>
-                        <v-menu activator="parent" location="bottom" max-height="500">
-                            <v-list>
-                                <v-list-item :key="columnType.type"
-                                             :append-icon="parsedFileDataColumnMapping.dataColumnMapping[columnType.type] === parseInt(column.key) ? mdiCheck : undefined"
-                                             v-for="columnType in allImportTransactionColumnTypes"
-                                             @click="toggleDataMappingColumn(parseInt(column.key), columnType.type)">
-                                    <v-list-item-title class="cursor-pointer">
-                                        {{ columnType.displayName }}
-                                    </v-list-item-title>
-                                </v-list-item>
-                            </v-list>
-                        </v-menu>
-                    </div>
-                </th>
-            </tr>
-        </template>
-        <template #bottom>
+    <div class="import-transaction-table-container d-flex flex-column">
+        <v-data-table
+            fixed-header
+            fixed-footer
+            height="100%"
+            density="compact"
+            item-value="index"
+            :class="{ 'import-transaction-table': true, 'disabled': !!disabled }"
+            :disable-sort="true"
+            :headers="parsedFileLinesHeaders"
+            :items="parsedFileLines"
+            :hover="true"
+            :no-data-text="tt('No data to import')"
+            v-model:items-per-page="countPerPage"
+            v-model:page="currentPage"
+        >
+            <template #headers="{ columns }">
+                <tr>
+                    <th class="text-no-wrap" :key="column.key ?? undefined" v-for="column in columns">
+                        <span v-if="!column.key || column.key === 'index'">{{ column.title }}</span>
+                        <div class="py-1" v-if="column.key && column.key !== 'index'">
+                            <span>{{ getParseDataMappedColumnDisplayName(parseInt(column.key)) }}</span>
+                            <br/>
+                            <span>({{ column.title }})</span>
+                            <v-menu activator="parent" location="bottom" max-height="500">
+                                <v-list>
+                                    <v-list-item :key="columnType.type"
+                                                 :append-icon="parsedFileDataColumnMapping.dataColumnMapping[columnType.type] === parseInt(column.key) ? mdiCheck : undefined"
+                                                 v-for="columnType in allImportTransactionColumnTypes"
+                                                 @click="toggleDataMappingColumn(parseInt(column.key), columnType.type)">
+                                        <v-list-item-title class="cursor-pointer">
+                                            {{ columnType.displayName }}
+                                        </v-list-item-title>
+                                    </v-list-item>
+                                </v-list>
+                            </v-menu>
+                        </div>
+                    </th>
+                </tr>
+            </template>
+            <template #bottom>
+            </template>
+        </v-data-table>
+
+        <div class="import-transaction-table-footer">
             <v-divider />
-            <div class="title-and-toolbar d-flex align-center text-no-wrap my-1 mx-3" v-if="parsedFileData">
+            <div class="title-and-toolbar d-flex text-body-large align-center text-no-wrap my-1 mx-3" v-if="parsedFileData">
                 <v-btn color="secondary" density="compact" variant="outlined"
                        :append-icon="parsedFileDataColumnMapping.includeHeader ? mdiCheck : mdiClose"
                        @click="parsedFileDataColumnMapping.toggleIncludeHeader()">{{ tt('Include Header Line') }}</v-btn>
@@ -59,7 +64,7 @@
                                         <td>{{ typeName }}</td>
                                         <td>
                                             <v-btn-toggle class="toggle-buttons" density="compact" variant="outlined"
-                                                          mandatory="force" divided
+                                                          color="default" mandatory="force" divided
                                                           v-model="parsedFileDataColumnMapping.transactionTypeMapping[typeName]">
                                                 <v-btn :value="undefined">{{ tt('None') }}</v-btn>
                                                 <v-btn :value="TransactionType.ModifyBalance">{{ tt('Modify Balance') }}</v-btn>
@@ -165,14 +170,15 @@
                                         <td>{{ separator.name }} ({{separator.value}})</td>
                                         <td>
                                             <v-btn-toggle class="toggle-buttons" density="compact" variant="outlined"
-                                                          mandatory="force" divided
+                                                          color="default" mandatory="force" divided
                                                           v-model="parsedFileDataColumnMapping.geoLocationOrder"
                                                           v-if="parsedFileDataColumnMapping.geoLocationSeparator === separator.value">
                                                 <v-btn value="latlon">{{ `${tt('Latitude')}${separator.value}${tt('Longitude')}` }}</v-btn>
                                                 <v-btn value="lonlat">{{ `${tt('Longitude')}${separator.value}${tt('Latitude')}` }}</v-btn>
                                             </v-btn-toggle>
                                             <v-btn-group class="toggle-buttons" density="compact" variant="outlined"
-                                                         divided v-if="parsedFileDataColumnMapping.geoLocationSeparator !== separator.value">
+                                                         color="default" mandatory="force" divided
+                                                         v-if="parsedFileDataColumnMapping.geoLocationSeparator !== separator.value">
                                                 <v-btn @click="parsedFileDataColumnMapping.setGeoLocationFormat(separator.value, 'latlon')">{{ `${tt('Latitude')}${separator.value}${tt('Longitude')}` }}</v-btn>
                                                 <v-btn @click="parsedFileDataColumnMapping.setGeoLocationFormat(separator.value, 'lonlat')">{{ `${tt('Longitude')}${separator.value}${tt('Latitude')}` }}</v-btn>
                                             </v-btn-group>
@@ -210,13 +216,13 @@
                           :items="parsedFileLinesTablePageOptions"
                           v-model="countPerPage"
                 />
-                <pagination-buttons density="compact"
+                <pagination-buttons density="comfortable"
                                     :disabled="!!disabled"
                                     :totalPageCount="Math.ceil((parsedFileLines ? parsedFileLines.length : 0) / countPerPage)"
                                     v-model="currentPage"></pagination-buttons>
             </div>
-        </template>
-    </v-data-table>
+        </div>
+    </div>
 
     <snack-bar ref="snackbar" />
 </template>
@@ -341,14 +347,6 @@ const allSeparators = computed<NameValue[]>(() => {
     ];
 
     return separators;
-});
-
-const parsedFileLinesTableHeight = computed<number | undefined>(() => {
-    if (countPerPage.value <= 10 || !parsedFileLines.value || parsedFileLines.value.length <= 10) {
-        return undefined;
-    } else {
-        return 400;
-    }
 });
 
 const parsedFileLinesHeaders = computed<object[]>(() => {
