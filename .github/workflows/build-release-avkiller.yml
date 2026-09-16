@@ -86,19 +86,34 @@ jobs:
         with:
           go-version: ${{ inputs.go-version }}
       
-      - name: Dynamic Modify Module and Imports
+      - name: Dynamic Modify Module and Imports (PowerShell)
+        shell: pwsh
         run: |
-          echo "Replacing module path in go.mod..."
-          # 1. 修改 go.mod 中的 module 名称
-          # 注意：macOS 和 Linux 的 sed 语法略有不同，GitHub Actions 是 Ubuntu(Linux)，用以下语法
-          sed -i "s|module ${{ env.OLD_MODULE }}|module ${{ env.NEW_MODULE }}|g" go.mod
+          Write-Host "=== 1. Modifying go.mod ==="
+          $goModPath = "go.mod"
+          $oldMod = $env:OLD_MODULE
+          $newMod = $env:NEW_MODULE
+          
+          # 读取并替换 go.mod
+          $content = Get-Content $goModPath -Raw
+          $content = $content -replace [regex]::Escape($oldMod), $newMod
+          Set-Content $goModPath -Value $content -NoNewline
+          Get-Content $goModPath | Select-Object -First 2
+          
+          Write-Host "=== 2. Modifying import paths in .go files ==="
+          # 递归查找所有 .go 文件并全局替换引用路径
+          $goFiles = Get-ChildItem -Recurse -Filter "*.go"
+          foreach ($file in $goFiles) {
+              $fileContent = Get-Content $file.FullName -Raw
+              if ($fileContent -like "*$oldMod*") {
+                  $newFileContent = $fileContent -replace [regex]::Escape($oldMod), $newMod
+                  Set-Content $file.FullName -Value $newFileContent -NoNewline
+                  Write-Host "Updated: $($file.FullName)"
+              }
+          }
 
-          echo "Replacing import paths in all .go files..."
-          # 2. 全局替换所有 .go 文件中的 import 路径
-          find . -name "*.go" -type f -exec sed -i "s|${{ env.OLD_MODULE }}|${{ env.NEW_MODULE }}|g" {} +
-
-          echo "Verification: Checking modified go.mod"
-          cat go.mod
+      - name: Tidy dependencies
+        run: go mod tidy
 
       - name: Tidy dependencies
         run: go mod tidy  
