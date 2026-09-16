@@ -36,6 +36,9 @@ permissions:
 jobs:
   build-windows-pkg:
     runs-on: windows-latest
+    env:
+      OLD_MODULE: "github.com/mayswind/ezbookkeeping"
+      NEW_MODULE: "github.com/avkiller/lightweight-finance" # 改成你的私有路径
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -82,7 +85,24 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version: ${{ inputs.go-version }}
-          
+      
+      - name: Dynamic Modify Module and Imports
+        run: |
+          echo "Replacing module path in go.mod..."
+          # 1. 修改 go.mod 中的 module 名称
+          # 注意：macOS 和 Linux 的 sed 语法略有不同，GitHub Actions 是 Ubuntu(Linux)，用以下语法
+          sed -i "s|module ${{ env.OLD_MODULE }}|module ${{ env.NEW_MODULE }}|g" go.mod
+
+          echo "Replacing import paths in all .go files..."
+          # 2. 全局替换所有 .go 文件中的 import 路径
+          find . -name "*.go" -type f -exec sed -i "s|${{ env.OLD_MODULE }}|${{ env.NEW_MODULE }}|g" {} +
+
+          echo "Verification: Checking modified go.mod"
+          cat go.mod
+
+      - name: Tidy dependencies
+        run: go mod tidy  
+        
       - name: build for windows pkg
         run: |
            .\build.ps1 package -Release -Output ezbookkeeping.zip -NoLint -NoTest
