@@ -112,8 +112,6 @@ jobs:
               }
           }
 
-      - name: Tidy dependencies
-        run: go mod tidy
 
       - name: Tidy dependencies
         run: go mod tidy  
