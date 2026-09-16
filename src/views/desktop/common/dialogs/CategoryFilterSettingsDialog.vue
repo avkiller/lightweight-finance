@@ -14,7 +14,7 @@
                        :disabled="!hasAnyAvailableCategory" @click="save">{{ tt(applyText) }}</v-btn>
 
                 <v-btn density="compact" color="default" variant="text" class="ms-2"
-                       :disabled="loading || !hasAnyAvailableCategory" :icon="true">
+                       :aria-label="tt('More')" :disabled="loading || !hasAnyAvailableCategory" :icon="true">
                     <v-icon :icon="mdiDotsVertical" />
                     <v-menu activator="parent">
                         <v-list>
@@ -48,8 +48,13 @@
                                        :key="itemIdx" v-for="itemIdx in [ 1, 2, 3 ]"></v-skeleton-loader>
                 </div>
 
+                <div v-if="!loading && !hasAnyVisibleCategory">
+                    <span class="text-body-large">{{ tt('No available category') }}</span>
+                </div>
+
                 <div v-else-if="!loading">
-                    <v-expansion-panels class="category-types" multiple v-model="expandCategoryTypes">
+                    <v-expansion-panels class="category-types" multiple v-model="expandCategoryTypes"
+                                        @click="focusParentWhenClicked($event, 'v-list', '.v-card-text')">
                         <v-expansion-panel :key="categoryType"
                                            :value="parseInt(categoryType) as CategoryType"
                                            class="border"
@@ -71,7 +76,7 @@
                                                             :indeterminate="isSubCategoriesHasButNotAllChecked(category, filterCategoryIds)"
                                                             @update:model-value="updateAllSubCategoriesSelected(category, $event)">
                                                     <template #label>
-                                                        <ItemIcon class="d-flex ms-1" icon-type="category" :icon-id="category.icon"
+                                                        <ItemIcon class="d-flex ms-1" :icon-type="getCategoryIconType(category.iconType)" :icon-id="category.icon"
                                                                   :color="category.color" :hidden-status="category.hidden"></ItemIcon>
                                                         <span class="text-body-medium ms-2">{{ category.name }}</span>
                                                     </template>
@@ -92,7 +97,7 @@
                                                         <v-checkbox :model-value="isCategoryChecked(subCategory, filterCategoryIds)"
                                                                     @update:model-value="updateCategorySelected(subCategory, $event)">
                                                             <template #label>
-                                                                <ItemIcon class="d-flex ms-1" icon-type="category" :icon-id="subCategory.icon"
+                                                                <ItemIcon class="d-flex ms-1" :icon-type="getCategoryIconType(subCategory.iconType)" :icon-id="subCategory.icon"
                                                                           :color="subCategory.color" :hidden-status="subCategory.hidden"></ItemIcon>
                                                                 <span class="text-body-medium ms-2">{{ subCategory.name }}</span>
                                                             </template>
@@ -130,6 +135,7 @@ import { useTransactionCategoriesStore } from '@/stores/transactionCategory.ts';
 import { CategoryType } from '@/core/category.ts';
 import type { TransactionCategory } from '@/models/transaction_category.ts';
 
+import { getCategoryIconType } from '@/lib/icon.ts';
 import {
     selectAllSubCategories,
     selectAll,
@@ -138,6 +144,7 @@ import {
     isSubCategoriesAllChecked,
     isSubCategoriesHasButNotAllChecked
 } from '@/lib/category.ts';
+import { focusParentWhenClicked } from '@/lib/ui/desktop.ts';
 
 import {
     mdiMagnify,
@@ -181,7 +188,7 @@ const {
     getCategoryTypeName,
     loadFilterCategoryIds,
     saveFilterCategoryIds
-} = useCategoryFilterSettingPageBase(props.type, props.categoryTypes, props.selectedCategoryIds);
+} = useCategoryFilterSettingPageBase(props.type, props.categoryTypes);
 
 const transactionCategoriesStore = useTransactionCategoriesStore();
 
@@ -204,7 +211,7 @@ function init(): void {
     }).then(() => {
         loading.value = false;
 
-        if (!loadFilterCategoryIds()) {
+        if (!loadFilterCategoryIds(props.selectedCategoryIds)) {
             snackbar.value?.showError('Parameter Invalid');
         }
     }).catch(error => {
@@ -271,7 +278,7 @@ function cancel(): void {
 
 watch(() => props.show, (newValue) => {
     if (newValue) {
-        loadFilterCategoryIds();
+        loadFilterCategoryIds(props.selectedCategoryIds);
         showHidden.value = false;
         filterContent.value = '';
     }
@@ -290,4 +297,3 @@ init();
     margin-top: 1rem;
 }
 </style>
-

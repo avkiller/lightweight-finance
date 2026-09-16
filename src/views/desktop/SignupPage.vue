@@ -8,16 +8,7 @@
         </router-link>
         <v-row no-gutters class="auth-wrapper">
             <v-col cols="12" md="4" class="auth-image-background d-none d-md-flex align-center justify-center position-relative">
-                <div class="d-flex auth-img-footer" v-if="!isDarkMode">
-                    <v-img class="img-with-direction" src="img/desktop/background.svg"/>
-                </div>
-                <div class="d-flex auth-img-footer" v-if="isDarkMode">
-                    <v-img class="img-with-direction" src="img/desktop/background-dark.svg"/>
-                </div>
-                <div class="d-flex align-center justify-center w-100 pt-10">
-                    <v-img class="img-with-direction" max-width="320px" src="img/desktop/people2.svg" v-if="!isDarkMode"/>
-                    <v-img class="img-with-direction" max-width="320px" src="img/desktop/people2-dark.svg" v-else-if="isDarkMode"/>
-                </div>
+                <auth-illustration variant="signup" />
             </v-col>
             <v-col cols="12" md="8" class="auth-card d-flex align-center justify-center pa-10">
                 <v-card variant="flat" class="mt-12 mt-sm-0 pt-sm-12 pt-md-0">
@@ -148,7 +139,7 @@
                                             <v-expansion-panels class="compacted-expansion-panels mt-2" variant="accordion" multiple>
                                                 <v-expansion-panel :key="idx" v-for="(category, idx) in categories">
                                                     <v-expansion-panel-title class="py-0 px-4">
-                                                        <ItemIcon icon-type="category" :icon-id="category.icon" :color="category.color"></ItemIcon>
+                                                        <ItemIcon :icon-type="getCategoryIconType(category.iconType)" :icon-id="category.icon" :color="category.color"></ItemIcon>
                                                         <span class="text-body-medium ms-2">{{ category.name }}</span>
                                                     </v-expansion-panel-title>
                                                     <v-expansion-panel-text v-if="category.subCategories.length">
@@ -157,7 +148,7 @@
                                                                       v-for="(subCategory, subIdx) in category.subCategories">
                                                                 <v-list-item>
                                                                     <template #prepend>
-                                                                        <ItemIcon icon-type="category" :icon-id="subCategory.icon" :color="subCategory.color"></ItemIcon>
+                                                                        <ItemIcon :icon-type="getCategoryIconType(subCategory.iconType)" :icon-id="subCategory.icon" :color="subCategory.color"></ItemIcon>
                                                                     </template>
                                                                     <span class="text-body-medium ms-2">{{ subCategory.name }}</span>
                                                                 </v-list-item>
@@ -217,7 +208,6 @@ import type { StepBarItem } from '@/components/desktop/StepsBar.vue';
 
 import { ref, computed, useTemplateRef } from 'vue';
 import { useRouter } from 'vue-router';
-import { useTheme } from 'vuetify';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { useSignupPageBase } from '@/views/base/SignupPageBase.ts';
@@ -226,10 +216,10 @@ import { useRootStore } from '@/stores/index.ts';
 
 import type { TypeAndDisplayName } from '@/core/base.ts';
 import { type LocalizedPresetCategory } from '@/core/category.ts';
-import { ThemeType } from '@/core/theme.ts';
 import { APPLICATION_LOGO_PATH } from '@/consts/asset.ts';
 
 import { categorizedArrayToPlainArray } from '@/lib/common.ts';
+import { getCategoryIconType } from '@/lib/icon.ts';
 import { isUserLogined } from '@/lib/userstate.ts';
 
 import {
@@ -241,7 +231,6 @@ import {
 type SnackBarType = InstanceType<typeof SnackBar>;
 
 const router = useRouter();
-const theme = useTheme();
 
 const { tt, getAllWeekDays, getAllTransactionDefaultCategories } = useI18n();
 
@@ -267,7 +256,6 @@ const navigateToHomePage = ref<boolean>(false);
 
 const allWeekDays = computed<TypeAndDisplayName[]>(() => getAllWeekDays());
 const allPresetCategories = computed<Record<string, LocalizedPresetCategory[]>>(() => getAllTransactionDefaultCategories(0, currentLocale.value));
-const isDarkMode = computed<boolean>(() => theme.global.name.value === ThemeType.Dark);
 
 const allSteps = computed<StepBarItem[]>(() => {
     const allSteps = [

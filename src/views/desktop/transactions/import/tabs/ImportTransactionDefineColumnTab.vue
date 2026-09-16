@@ -14,6 +14,7 @@
             :no-data-text="tt('No data to import')"
             v-model:items-per-page="countPerPage"
             v-model:page="currentPage"
+            @click="focusTableScrollContainer"
         >
             <template #headers="{ columns }">
                 <tr>
@@ -64,7 +65,7 @@
                                         <td>{{ typeName }}</td>
                                         <td>
                                             <v-btn-toggle class="toggle-buttons" density="compact" variant="outlined"
-                                                          color="default" mandatory="force" divided
+                                                          color="default" mandatory="force"
                                                           v-model="parsedFileDataColumnMapping.transactionTypeMapping[typeName]">
                                                 <v-btn :value="undefined">{{ tt('None') }}</v-btn>
                                                 <v-btn :value="TransactionType.ModifyBalance">{{ tt('Modify Balance') }}</v-btn>
@@ -242,6 +243,8 @@ import { KnownDateTimezoneFormat } from '@/core/timezone.ts';
 import { TransactionType } from '@/core/transaction.ts';
 import { ImportTransactionColumnType, ImportTransactionDataMapping } from '@/core/import_transaction.ts';
 import { KnownFileType } from '@/core/file.ts';
+
+import { DEFAULT_PAGE_COUNTS } from '@/consts/page.ts';
 import { KNOWN_COLUMN_NAME_MAPPING, KNOWN_TRANSACTION_TYPE_NAME_MAPPING } from '@/consts/import_transaction.ts';
 
 import {
@@ -254,6 +257,7 @@ import {
     openTextFileContent,
     startDownloadFile
 } from '@/lib/ui/common.ts';
+import { focusTableScrollContainer } from '@/lib/ui/desktop.ts';
 import logger from '@/lib/logger.ts';
 
 import {
@@ -296,7 +300,8 @@ const {
     getLongDateFormatOrder,
     getShortDateFormatOrder,
     getAllImportTransactionColumnTypes,
-    formatNumberToLocalizedNumerals
+    formatNumberToLocalizedNumerals,
+    getTablePageOptions
 } = useI18n();
 
 const snackbar = useTemplateRef<SnackBarType>('snackbar');
@@ -401,7 +406,7 @@ const parsedFileLines = computed<Record<string, string>[] | undefined>(() => {
     return allLines;
 });
 
-const parsedFileLinesTablePageOptions = computed<NameNumeralValue[]>(() => getTablePageOptions(parsedFileLines.value?.length));
+const parsedFileLinesTablePageOptions = computed<NameNumeralValue[]>(() => getTablePageOptions(DEFAULT_PAGE_COUNTS, parsedFileLines.value?.length, true, false));
 
 const parsedFileAllTransactionTypes = computed<string[]>(() => parsedFileDataColumnMapping.value.parseFileAllTransactionTypes(props.parsedFileData));
 const parsedFileValidMappedTransactionTypes = computed<Record<string, TransactionType>>(() => parsedFileDataColumnMapping.value.parseFileValidMappedTransactionTypes(props.parsedFileData));
@@ -450,27 +455,6 @@ const displayFileAutoDetectedAmountFormat = computed<string>(() => {
 
     return tt('Unknown');
 });
-
-function getTablePageOptions(linesCount?: number): NameNumeralValue[] {
-    const pageOptions: NameNumeralValue[] = [];
-
-    if (!linesCount || linesCount < 1) {
-        pageOptions.push({ value: -1, name: tt('All') });
-        return pageOptions;
-    }
-
-    for (const count of [ 5, 10, 15, 20, 25, 30, 50 ]) {
-        if (linesCount < count) {
-            break;
-        }
-
-        pageOptions.push({ value: count, name: formatNumberToLocalizedNumerals(count) });
-    }
-
-    pageOptions.push({ value: -1, name: tt('All') });
-
-    return pageOptions;
-}
 
 function getNormalizedKey(key: string): string {
     return key.toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('-', '');

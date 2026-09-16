@@ -2,8 +2,9 @@ import { type PartialRecord, itemAndIndex } from '@/core/base.ts';
 import type { BigDecimal } from '@/core/numeral.ts';
 import type { TextualYearMonthDay, Year1BasedMonth, YearMonthDay, StartEndTime, WeekDay } from '@/core/datetime.ts';
 import { type Coordinate, getNormalizedCoordinate } from '@/core/coordinate.ts';
-import { TransactionType, TransactionTagFilterType } from '@/core/transaction.ts';
 import type { ColorValue } from '@/core/color.ts';
+import type { IconType } from '@/core/icon.ts';
+import { TransactionType, TransactionTagFilterType } from '@/core/transaction.ts';
 import type { CategoricalChartSourceDataItem } from '@/core/chart.ts';
 
 import { Account, type AccountInfoResponse } from './account.ts';
@@ -918,6 +919,7 @@ export interface TransactionStatisticDataItemBase extends SortableTransactionSta
     readonly type: TransactionStatisticDataItemType;
     readonly id: string;
     readonly icon: string;
+    readonly iconType: IconType;
     readonly color: ColorValue;
     readonly hidden: boolean;
     readonly displayOrders: number[];
@@ -966,6 +968,8 @@ export interface TransactionCategoricalAnalysisData {
 
 export interface TransactionCategoricalAnalysisDataItem extends Record<string, unknown>, TransactionStatisticDataItemBase {
     readonly percent: number;
+    readonly originalValue?: BigDecimal;
+    readonly originalCurrency?: string;
 }
 
 export interface TransactionTrendsAnalysisData {
@@ -1030,6 +1034,19 @@ export interface TransactionAmountsResponseItemAmountInfo {
     readonly currency: string;
     readonly incomeAmount: string;
     readonly expenseAmount: string;
+}
+
+export interface TransactionDailyAmountsRequest {
+    readonly startTime: number;
+    readonly endTime: number;
+    readonly useTransactionTimezone: boolean;
+    readonly excludeAccountIds: string[];
+    readonly excludeCategoryIds: string[];
+}
+
+export interface TransactionDailyAmountsResponseItem {
+    readonly date: string;
+    readonly amounts: TransactionAmountsResponseItemAmountInfo[];
 }
 
 export type TransactionOverviewData = PartialRecord<TransactionAmountsRequestType, TransactionOverviewDataItem>;

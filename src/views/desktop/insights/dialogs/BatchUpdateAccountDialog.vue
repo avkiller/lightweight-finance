@@ -5,8 +5,8 @@
                                   :cancel-button-title="tt('Cancel')"
                                   @cancel="cancel">
             <template #after-title>
-                <v-btn density="compact" color="default" variant="text"
-                       class="ms-2" :icon="true" :disabled="loading || submitting"
+                <v-btn density="compact" color="default" variant="text" class="ms-2"
+                       :aria-label="tt('Refresh')" :icon="true" :disabled="loading || submitting"
                        :loading="loading" @click="reload">
                     <template #loader>
                         <v-progress-circular indeterminate size="20"/>
@@ -20,12 +20,12 @@
                 <div class="mt-5">
                     <two-column-select primary-key-field="id" primary-value-field="category"
                                        primary-title-field="name" primary-footer-field="displayBalance"
-                                       primary-icon-field="icon" primary-icon-type="account"
+                                       primary-icon-field="icon" primary-icon-type-field="iconType" primary-icon-type="account"
                                        primary-sub-items-field="accounts"
                                        :primary-title-i18n="true"
                                        secondary-key-field="id" secondary-value-field="id"
                                        secondary-title-field="name" secondary-footer-field="displayBalance"
-                                       secondary-icon-field="icon" secondary-icon-type="account" secondary-color-field="color"
+                                       secondary-icon-field="icon" secondary-icon-type-field="iconType" secondary-icon-type="account" secondary-color-field="color"
                                        :disabled="loading || !allVisibleAccounts.length"
                                        :enable-filter="true" :filter-placeholder="tt('Find account')" :filter-no-items-text="tt('No available account')"
                                        :custom-selection-primary-text="getAccountDisplayName(accountId)"
@@ -41,7 +41,7 @@
                 <v-btn color="secondary" variant="tonal" :disabled="loading || submitting" @click="cancel">{{ tt('Cancel') }}</v-btn>
                 <v-spacer/>
                 <v-btn :disabled="loading || submitting || updateIds.length < 1 || !accountId" @click="confirm">
-                    {{ tt('OK') }}
+                    {{ tt('Save') }}
                     <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
                 </v-btn>
             </template>

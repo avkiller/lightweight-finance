@@ -14,7 +14,7 @@
                        :disabled="!hasAnyAvailableAccount" @click="save">{{ tt(applyText) }}</v-btn>
 
                 <v-btn density="compact" color="default" variant="text" class="ms-2"
-                       :disabled="loading || !hasAnyAvailableAccount" :icon="true">
+                       :aria-label="tt('More')" :disabled="loading || !hasAnyAvailableAccount" :icon="true">
                     <v-icon :icon="mdiDotsVertical" />
                     <v-menu activator="parent">
                         <v-list>
@@ -53,7 +53,8 @@
                 </div>
 
                 <div v-else-if="!loading && hasAnyVisibleAccount">
-                    <v-expansion-panels class="account-categories" multiple v-model="expandAccountCategories">
+                    <v-expansion-panels class="account-categories" multiple v-model="expandAccountCategories"
+                                        @click="focusParentWhenClicked($event, 'v-list', '.v-card-text')">
                         <v-expansion-panel :key="accountCategory.category"
                                            :value="accountCategory.category"
                                            class="border"
@@ -73,7 +74,7 @@
                                                             :indeterminate="isAccountOrSubAccountsHasButNotAllChecked(account, filterAccountIds)"
                                                             @update:model-value="updateAccountOrSubAccountsSelected(account, $event)">
                                                     <template #label>
-                                                        <ItemIcon class="d-flex ms-1" icon-type="account" :icon-id="account.icon"
+                                                        <ItemIcon class="d-flex ms-1" :icon-type="getAccountIconType(account.iconType)" :icon-id="account.icon"
                                                                   :color="account.color" :hidden-status="account.hidden"></ItemIcon>
                                                         <span class="text-body-medium ms-2">{{ account.name }}</span>
                                                     </template>
@@ -94,7 +95,7 @@
                                                         <v-checkbox :model-value="isAccountChecked(subAccount, filterAccountIds)"
                                                                     @update:model-value="updateAccountSelected(subAccount, $event)">
                                                             <template #label>
-                                                                <ItemIcon class="d-flex ms-1" icon-type="account" :icon-id="subAccount.icon"
+                                                                <ItemIcon class="d-flex ms-1" :icon-type="getAccountIconType(subAccount.iconType)" :icon-id="subAccount.icon"
                                                                           :color="subAccount.color" :hidden-status="subAccount.hidden"></ItemIcon>
                                                                 <span class="text-body-medium ms-2">{{ subAccount.name }}</span>
                                                             </template>
@@ -132,6 +133,7 @@ import { useAccountsStore } from '@/stores/account.ts';
 import { AccountType, AccountCategory } from '@/core/account.ts';
 import type { Account } from '@/models/account.ts';
 
+import { getAccountIconType } from '@/lib/icon.ts';
 import {
     selectAccountOrSubAccounts,
     selectAll,
@@ -140,6 +142,7 @@ import {
     isAccountOrSubAccountsAllChecked,
     isAccountOrSubAccountsHasButNotAllChecked
 } from '@/lib/account.ts';
+import { focusParentWhenClicked } from '@/lib/ui/desktop.ts';
 
 import {
     mdiMagnify,
@@ -156,6 +159,7 @@ type SnackBarType = InstanceType<typeof SnackBar>;
 const props = defineProps<{
     type: AccountFilterType;
     selectedAccountIds?: string[];
+    disableHiddenAccount?: boolean;
     autoSave?: boolean;
     show: boolean;
 }>();
@@ -183,7 +187,7 @@ const {
     isAccountChecked,
     loadFilterAccountIds,
     saveFilterAccountIds
-} = useAccountFilterSettingPageBase(props.type, props.selectedAccountIds);
+} = useAccountFilterSettingPageBase(props.type, computed(() => props.disableHiddenAccount));
 
 const accountsStore = useAccountsStore();
 
@@ -202,7 +206,7 @@ function init(): void {
     }).then(() => {
         loading.value = false;
 
-        if (!loadFilterAccountIds()) {
+        if (!loadFilterAccountIds(props.selectedAccountIds)) {
             snackbar.value?.showError('Parameter Invalid');
         }
     }).catch(error => {
@@ -265,7 +269,7 @@ function cancel(): void {
 
 watch(() => props.show, (newValue) => {
     if (newValue) {
-        loadFilterAccountIds();
+        loadFilterAccountIds(props.selectedAccountIds);
         showHidden.value = false;
         filterContent.value = '';
     }

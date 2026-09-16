@@ -14,6 +14,7 @@ import { VBtnToggle } from 'vuetify/components/VBtnToggle';
 import { VCard, VCardActions, VCardItem, VCardSubtitle, VCardText, VCardTitle } from 'vuetify/components/VCard';
 import { VCheckbox, VCheckboxBtn } from 'vuetify/components/VCheckbox';
 import { VChip } from 'vuetify/components/VChip';
+import { VColorPicker } from 'vuetify/components/VColorPicker';
 import { VDataTable } from 'vuetify/components/VDataTable';
 import { VDialog } from 'vuetify/components/VDialog';
 import { VDivider } from 'vuetify/components/VDivider';
@@ -92,14 +93,17 @@ import DateTimePicker from '@/components/common/DateTimePicker.vue';
 import MonthPicker from '@/components/common/MonthPicker.vue';
 import TransactionCalendar from '@/components/common/TransactionCalendar.vue';
 
+import MainPageLayout from '@/components/desktop/MainPageLayout.vue';
 import OneColumnDialogLayout from '@/components/desktop/OneColumnDialogLayout.vue';
 import TwoColumnDialogLayout from '@/components/desktop/TwoColumnDialogLayout.vue';
+import AuthIllustration from '@/components/desktop/AuthIllustration.vue';
 import ItemIcon from '@/components/desktop/ItemIcon.vue';
 import ToggleButton from '@/components/desktop/ToggleButton.vue';
 import BtnVerticalGroup from '@/components/desktop/BtnVerticalGroup.vue';
 import NumberInput from '@/components/desktop/NumberInput.vue';
 import AmountInput from '@/components/desktop/AmountInput.vue';
 import AmountInputDialog from '@/components/desktop/AmountInputDialog.vue';
+import AmountFilterInput from '@/components/desktop/AmountFilterInput.vue';
 import LanguageSelect from '@/components/desktop/LanguageSelect.vue';
 import LanguageSelectButton from '@/components/desktop/LanguageSelectButton.vue';
 import CurrencySelect from '@/components/desktop/CurrencySelect.vue';
@@ -113,6 +117,10 @@ import TransactionTagAutoComplete from '@/components/desktop/TransactionTagAutoC
 import ScheduleFrequencySelect from '@/components/desktop/ScheduleFrequencySelect.vue';
 import StepsBar from '@/components/desktop/StepsBar.vue';
 import ConfirmDialog from '@/components/desktop/ConfirmDialog.vue';
+import CodeEditor from '@/components/desktop/CodeEditor.vue';
+import DataExportDialog from '@/components/desktop/DataExportDialog.vue';
+import JsonImportDialog from '@/components/desktop/JsonImportDialog.vue';
+import JsonExportDialog from '@/components/desktop/JsonExportDialog.vue';
 import SnackBar from '@/components/desktop/SnackBar.vue';
 import PieChartComponent from '@/components/desktop/PieChart.vue';
 import RadarChartComponent from '@/components/desktop/RadarChart.vue';
@@ -121,10 +129,13 @@ import TrendsChart from '@/components/desktop/TrendsChart.vue';
 import HierarchyChart from '@/components/desktop/HierarchyChart.vue';
 import HeatMapChart from '@/components/desktop/HeatMapChart.vue';
 import CalendarHeatMapChart from '@/components/desktop/CalendarHeatMapChart.vue';
+import DateRangeCalendarHeatMapChart from '@/components/desktop/DateRangeCalendarHeatMapChart.vue';
+import CustomChart from '@/components/desktop/CustomChart.vue';
 import RenameDialog from '@/components/desktop/RenameDialog.vue';
 import DateRangeSelectionDialog from '@/components/desktop/DateRangeSelectionDialog.vue';
 import MonthSelectionDialog from '@/components/desktop/MonthSelectionDialog.vue';
 import MonthRangeSelectionDialog from '@/components/desktop/MonthRangeSelectionDialog.vue';
+import MonthlyIncomeAndExpenseChart from '@/components/desktop/MonthlyIncomeAndExpenseChart.vue';
 import AccountBalanceTrendsChart from '@/components/desktop/AccountBalanceTrendsChart.vue';
 import AccountAndCategorySankeyChart from '@/components/desktop/AccountAndCategorySankeyChart.vue';
 import SwitchToMobileDialog from '@/components/desktop/SwitchToMobileDialog.vue';
@@ -158,6 +169,7 @@ const vuetify = createVuetify({
         VCheckbox,
         VCheckboxBtn,
         VChip,
+        VColorPicker,
         VDataTable,
         VDialog,
         VDivider,
@@ -555,14 +567,17 @@ app.component('DateTimePicker', DateTimePicker);
 app.component('MonthPicker', MonthPicker);
 app.component('TransactionCalendar', TransactionCalendar);
 
+app.component('MainPageLayout', MainPageLayout);
 app.component('OneColumnDialogLayout', OneColumnDialogLayout);
 app.component('TwoColumnDialogLayout', TwoColumnDialogLayout);
+app.component('AuthIllustration', AuthIllustration);
 app.component('ItemIcon', ItemIcon);
 app.component('ToggleButton', ToggleButton);
 app.component('BtnVerticalGroup', BtnVerticalGroup);
 app.component('NumberInput', NumberInput);
 app.component('AmountInput', AmountInput);
 app.component('AmountInputDialog', AmountInputDialog);
+app.component('AmountFilterInput', AmountFilterInput);
 app.component('LanguageSelect', LanguageSelect);
 app.component('LanguageSelectButton', LanguageSelectButton);
 app.component('CurrencySelect', CurrencySelect);
@@ -576,6 +591,10 @@ app.component('TransactionTagAutoComplete', TransactionTagAutoComplete);
 app.component('ScheduleFrequencySelect', ScheduleFrequencySelect);
 app.component('StepsBar', StepsBar);
 app.component('ConfirmDialog', ConfirmDialog);
+app.component('CodeEditor', CodeEditor);
+app.component('DataExportDialog', DataExportDialog);
+app.component('JsonImportDialog', JsonImportDialog);
+app.component('JsonExportDialog', JsonExportDialog);
 app.component('SnackBar', SnackBar);
 app.component('PieChart', PieChartComponent);
 app.component('RadarChart', RadarChartComponent);
@@ -584,10 +603,13 @@ app.component('TrendsChart', TrendsChart);
 app.component('HierarchyChart', HierarchyChart);
 app.component('HeatMapChart', HeatMapChart);
 app.component('CalendarHeatMapChart', CalendarHeatMapChart);
+app.component('DateRangeCalendarHeatMapChart', DateRangeCalendarHeatMapChart);
+app.component('CustomChart', CustomChart);
 app.component('RenameDialog', RenameDialog);
 app.component('DateRangeSelectionDialog', DateRangeSelectionDialog);
 app.component('MonthSelectionDialog', MonthSelectionDialog);
 app.component('MonthRangeSelectionDialog', MonthRangeSelectionDialog);
+app.component('MonthlyIncomeAndExpenseChart', MonthlyIncomeAndExpenseChart);
 app.component('AccountBalanceTrendsChart', AccountBalanceTrendsChart);
 app.component('AccountAndCategorySankeyChart', AccountAndCategorySankeyChart);
 app.component('SwitchToMobileDialog', SwitchToMobileDialog);

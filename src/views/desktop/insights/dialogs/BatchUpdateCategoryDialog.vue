@@ -4,8 +4,8 @@
                                   :title="title" :cancel-button-title="tt('Cancel')"
                                   @cancel="cancel">
             <template #after-title>
-                <v-btn density="compact" color="default" variant="text"
-                       class="ms-2" :icon="true" :disabled="loading || submitting"
+                <v-btn density="compact" color="default" variant="text" class="ms-2"
+                       :aria-label="tt('Refresh')" :icon="true" :disabled="loading || submitting"
                        :loading="loading" @click="reload">
                     <template #loader>
                         <v-progress-circular indeterminate size="20"/>
@@ -18,10 +18,10 @@
             <template #content>
                 <div class="mt-5">
                     <two-column-select primary-key-field="id" primary-value-field="id" primary-title-field="name"
-                                       primary-icon-field="icon" primary-icon-type="category" primary-color-field="color"
+                                       primary-icon-field="icon" primary-icon-type-field="iconType" primary-icon-type="category" primary-color-field="color"
                                        primary-hidden-field="hidden" primary-sub-items-field="subCategories"
                                        secondary-key-field="id" secondary-value-field="id" secondary-title-field="name"
-                                       secondary-icon-field="icon" secondary-icon-type="category" secondary-color-field="color"
+                                       secondary-icon-field="icon" secondary-icon-type-field="iconType" secondary-icon-type="category" secondary-color-field="color"
                                        secondary-hidden-field="hidden"
                                        :disabled="loading || submitting || !hasVisibleExpenseCategories"
                                        :enable-filter="true" :filter-placeholder="tt('Find category')" :filter-no-items-text="tt('No available category')"
@@ -35,10 +35,10 @@
                                        v-if="type === CategoryType.Expense">
                     </two-column-select>
                     <two-column-select primary-key-field="id" primary-value-field="id" primary-title-field="name"
-                                       primary-icon-field="icon" primary-icon-type="category" primary-color-field="color"
+                                       primary-icon-field="icon" primary-icon-type-field="iconType" primary-icon-type="category" primary-color-field="color"
                                        primary-hidden-field="hidden" primary-sub-items-field="subCategories"
                                        secondary-key-field="id" secondary-value-field="id" secondary-title-field="name"
-                                       secondary-icon-field="icon" secondary-icon-type="category" secondary-color-field="color"
+                                       secondary-icon-field="icon" secondary-icon-type-field="iconType" secondary-icon-type="category" secondary-color-field="color"
                                        secondary-hidden-field="hidden"
                                        :disabled="loading || submitting || !hasVisibleIncomeCategories"
                                        :enable-filter="true" :filter-placeholder="tt('Find category')" :filter-no-items-text="tt('No available category')"
@@ -52,10 +52,10 @@
                                        v-if="type === CategoryType.Income">
                     </two-column-select>
                     <two-column-select primary-key-field="id" primary-value-field="id" primary-title-field="name"
-                                       primary-icon-field="icon" primary-icon-type="category" primary-color-field="color"
+                                       primary-icon-field="icon" primary-icon-type-field="iconType" primary-icon-type="category" primary-color-field="color"
                                        primary-hidden-field="hidden" primary-sub-items-field="subCategories"
                                        secondary-key-field="id" secondary-value-field="id" secondary-title-field="name"
-                                       secondary-icon-field="icon" secondary-icon-type="category" secondary-color-field="color"
+                                       secondary-icon-field="icon" secondary-icon-type-field="iconType" secondary-icon-type="category" secondary-color-field="color"
                                        secondary-hidden-field="hidden"
                                        :disabled="loading || submitting || !hasVisibleTransferCategories"
                                        :enable-filter="true" :filter-placeholder="tt('Find category')" :filter-no-items-text="tt('No available category')"
@@ -75,7 +75,7 @@
                 <v-btn color="secondary" variant="tonal" :disabled="loading || submitting" @click="cancel">{{ tt('Cancel') }}</v-btn>
                 <v-spacer/>
                 <v-btn :disabled="loading || submitting || updateIds.length < 1 || !categoryId" @click="confirm">
-                    {{ tt('OK') }}
+                    {{ tt('Save') }}
                     <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
                 </v-btn>
             </template>

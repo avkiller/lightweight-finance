@@ -1,7 +1,7 @@
 <template>
     <f7-page @page:afterin="onPageAfterIn">
         <f7-navbar>
-            <f7-nav-left :class="{ 'disabled': loading || updatingLastReconciledTime }"  :back-link="tt('Back')"></f7-nav-left>
+            <f7-nav-left :class="{ 'disabled': loading || updatingLastReconciledTime }" :back-link="tt('Back')"></f7-nav-left>
             <f7-nav-title>
                 <span style="color: var(--f7-text-color)" v-if="!finishQuery">{{ tt('Reconciliation Statement') }}</span>
                 <f7-link popover-open=".display-mode-popover-menu" :class="{ 'disabled': loading || updatingLastReconciledTime }" v-if="finishQuery">
@@ -11,8 +11,8 @@
                 </f7-link>
             </f7-nav-title>
             <f7-nav-right :class="{ 'navbar-compact-icons': true, 'disabled': loading || updatingLastReconciledTime }">
-                <f7-link icon-f7="checkmark_alt" :class="{ 'disabled': !validQuery }" @click="reload(false)" v-if="!finishQuery"></f7-link>
-                <f7-link icon-f7="ellipsis" :class="{ 'disabled': loading || updatingLastReconciledTime }" v-if="finishQuery" @click="showMoreActionSheet = true"></f7-link>
+                <f7-link icon-f7="checkmark_alt" :class="{ 'disabled': !validQuery }" :aria-label="tt('Continue')" @click="reload(false)" v-if="!finishQuery"></f7-link>
+                <f7-link icon-f7="ellipsis" :class="{ 'disabled': loading || updatingLastReconciledTime }" :aria-label="tt('More')" v-if="finishQuery" @click="showMoreActionSheet = true"></f7-link>
             </f7-nav-right>
         </f7-navbar>
 
@@ -189,7 +189,7 @@
                         <div class="display-flex no-padding-horizontal" v-if="item.type == 'transaction' && item.transaction">
                             <div class="item-media">
                                 <div class="transaction-icon display-flex align-items-center">
-                                    <ItemIcon icon-type="category"
+                                    <ItemIcon :icon-type="getCategoryIconType(item.transaction.category?.iconType)"
                                               :icon-id="item.transaction.category?.icon"
                                               :color="item.transaction.category?.color"
                                               v-if="item.transaction.category && item.transaction.category?.color"></ItemIcon>
@@ -249,7 +249,7 @@
                                             :text="tt('Edit')"
                                             v-if="item.transaction.editable && item.transaction.type !== TransactionType.ModifyBalance"
                                             @click="editTransaction(item.transaction)"></f7-swipeout-button>
-                        <f7-swipeout-button color="red" class="padding-horizontal"
+                        <f7-swipeout-button color="red" class="padding-horizontal" :aria-label="tt('Delete')"
                                             v-if="item.transaction.editable"
                                             @click="removeTransaction(item.transaction, false)">
                             <f7-icon f7="trash"></f7-icon>
@@ -261,7 +261,7 @@
 
         <f7-card v-if="finishQuery && showAccountBalanceTrendsCharts">
             <f7-card-header class="no-border display-block">
-                <div class="statistics-chart-header display-flex full-line justify-content-space-between">
+                <div class="statistics-chart-header display-flex width-100 justify-content-space-between">
                     <div></div>
                     <div class="align-self-flex-end">
                         <span style="margin-inline-end: 4px;">{{ tt('Time Granularity') }}</span>
@@ -389,6 +389,7 @@ import {
     getDateRangeByBillingCycleDateType,
     getDateRangeByLastReconciledTimeRangeDateType
 } from '@/lib/datetime.ts';
+import { getCategoryIconType } from '@/lib/icon.ts';
 
 interface ReconciliationStatementVirtualListData {
     items: ReconciliationStatementVirtualListItem[],

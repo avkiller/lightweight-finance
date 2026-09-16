@@ -1,18 +1,18 @@
 <template>
     <v-dialog width="600" :persistent="submitting || !!selectedNames.length" v-model="showState">
         <one-column-dialog-layout content-class="pa-0"
-                                  :title="tt(title)" :cancel-button-title="tt('Cancel')"
+                                  :title="title" :cancel-button-title="tt('Cancel')"
                                   :disabled="submitting"
                                   @cancel="cancel">
             <template #toolbar>
                 <v-btn class="ms-2" density="comfortable" variant="outlined"
                        :disabled="submitting || !selectedNames || !selectedNames.length" @click="confirm">
-                    {{ tt('OK') }}
+                    {{ tt('Save') }}
                     <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
                 </v-btn>
 
                 <v-btn density="compact" color="default" variant="text" class="ms-2"
-                       :disabled="submitting || !invalidItems || !invalidItems.length" :icon="true">
+                       :aria-label="tt('More')" :disabled="submitting || !invalidItems || !invalidItems.length" :icon="true">
                     <v-icon :icon="mdiDotsVertical" />
                     <v-menu activator="parent">
                         <v-list>
@@ -65,6 +65,7 @@ import { useTransactionCategoriesStore } from '@/stores/transactionCategory.ts';
 import { useTransactionTagsStore } from '@/stores/transactionTag.ts';
 
 import { type NameValue, values } from '@/core/base.ts';
+import { IconType } from '@/core/icon.ts';
 import { CategoryType } from '@/core/category.ts';
 import { AUTOMATICALLY_CREATED_CATEGORY_ICON_ID } from '@/consts/icon.ts';
 import { DEFAULT_CATEGORY_COLOR } from '@/consts/color.ts';
@@ -257,6 +258,7 @@ function confirm(): void {
             name: primaryCategoryName,
             type: categoryType,
             icon: AUTOMATICALLY_CREATED_CATEGORY_ICON_ID,
+            iconType: IconType.System,
             color: DEFAULT_CATEGORY_COLOR,
             subCategories: subCategories
         }];

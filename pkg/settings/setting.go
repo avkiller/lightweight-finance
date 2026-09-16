@@ -65,6 +65,7 @@ const (
 // Object Storage types
 const (
 	LocalFileSystemObjectStorageType string = "local_filesystem"
+	S3StorageType                    string = "s3"
 	MinIOStorageType                 string = "minio"
 	WebDAVStorageType                string = "webdav"
 )
@@ -202,6 +203,7 @@ const (
 	defaultOAuth2StateExpiredTime uint32 = 300   // 5 minutes
 	defaultOAuth2RequestTimeout   uint32 = 10000 // 10 seconds
 
+	defaultUserCustomIconFileMaxSize     uint32 = 1048576  // 1MB
 	defaultTransactionPictureFileMaxSize uint32 = 10485760 // 10MB
 	defaultUserAvatarFileMaxSize         uint32 = 1048576  // 1MB
 
@@ -234,6 +236,20 @@ type SMTPConfig struct {
 	SMTPPasswd        string
 	SMTPSkipTLSVerify bool
 	FromAddress       string
+}
+
+// S3Config represents the S3-compatible object storage setting config
+type S3Config struct {
+	Endpoint        string
+	Region          string
+	AccessKeyID     string
+	SecretAccessKey string
+	SessionToken    string
+	UseSSL          bool
+	SkipTLSVerify   bool
+	UsePathStyle    bool
+	Bucket          string
+	RootPath        string
 }
 
 // MinIOConfig represents the MinIO setting config
@@ -354,6 +370,7 @@ type Config struct {
 	// Storage
 	StorageType         string
 	LocalFileSystemPath string
+	S3Config            *S3Config
 	MinIOConfig         *MinIOConfig
 	WebDAVConfig        *WebDAVConfig
 
@@ -430,6 +447,8 @@ type Config struct {
 	EnableUserRegister            bool
 	EnableUserVerifyEmail         bool
 	EnableUserForceVerifyEmail    bool
+	EnableUserCustomIcon          bool
+	MaxUserCustomIconFileSize     uint32
 	EnableTransactionPictures     bool
 	MaxTransactionPictureFileSize uint32
 	EnableScheduledTransaction    bool
@@ -837,6 +856,8 @@ func loadLogConfiguration(config *Config, configFile *ini.File, sectionName stri
 func loadStorageConfiguration(config *Config, configFile *ini.File, sectionName string) error {
 	if getConfigItemStringValue(configFile, sectionName, "type") == LocalFileSystemObjectStorageType {
 		config.StorageType = LocalFileSystemObjectStorageType
+	} else if getConfigItemStringValue(configFile, sectionName, "type") == S3StorageType {
+		config.StorageType = S3StorageType
 	} else if getConfigItemStringValue(configFile, sectionName, "type") == MinIOStorageType {
 		config.StorageType = MinIOStorageType
 	} else if getConfigItemStringValue(configFile, sectionName, "type") == WebDAVStorageType {
@@ -852,6 +873,19 @@ func loadStorageConfiguration(config *Config, configFile *ini.File, sectionName 
 	if config.StorageType == LocalFileSystemObjectStorageType && err != nil {
 		return errs.ErrInvalidLocalFileSystemStoragePath
 	}
+
+	s3Config := &S3Config{}
+	s3Config.Endpoint = getConfigItemStringValue(configFile, sectionName, "s3_endpoint")
+	s3Config.Region = getConfigItemStringValue(configFile, sectionName, "s3_region")
+	s3Config.AccessKeyID = getConfigItemStringValue(configFile, sectionName, "s3_access_key_id")
+	s3Config.SecretAccessKey = getConfigItemStringValue(configFile, sectionName, "s3_secret_access_key")
+	s3Config.SessionToken = getConfigItemStringValue(configFile, sectionName, "s3_session_token")
+	s3Config.UseSSL = getConfigItemBoolValue(configFile, sectionName, "s3_use_ssl", false)
+	s3Config.SkipTLSVerify = getConfigItemBoolValue(configFile, sectionName, "s3_skip_tls_verify", false)
+	s3Config.UsePathStyle = getConfigItemBoolValue(configFile, sectionName, "s3_use_path_style", false)
+	s3Config.Bucket = getConfigItemStringValue(configFile, sectionName, "s3_bucket")
+	s3Config.RootPath = getConfigItemStringValue(configFile, sectionName, "s3_root_path")
+	config.S3Config = s3Config
 
 	minIOConfig := &MinIOConfig{}
 	minIOConfig.Endpoint = getConfigItemStringValue(configFile, sectionName, "minio_endpoint")
@@ -1145,6 +1179,8 @@ func loadUserConfiguration(config *Config, configFile *ini.File, sectionName str
 	config.EnableUserRegister = getConfigItemBoolValue(configFile, sectionName, "enable_register", false)
 	config.EnableUserVerifyEmail = getConfigItemBoolValue(configFile, sectionName, "enable_email_verify", false)
 	config.EnableUserForceVerifyEmail = getConfigItemBoolValue(configFile, sectionName, "enable_force_email_verify", false)
+	config.EnableUserCustomIcon = getConfigItemBoolValue(configFile, sectionName, "enable_custom_icon", false)
+	config.MaxUserCustomIconFileSize = getConfigItemUint32Value(configFile, sectionName, "max_user_custom_icon_size", defaultUserCustomIconFileMaxSize)
 	config.EnableTransactionPictures = getConfigItemBoolValue(configFile, sectionName, "enable_transaction_picture", false)
 	config.MaxTransactionPictureFileSize = getConfigItemUint32Value(configFile, sectionName, "max_transaction_picture_size", defaultTransactionPictureFileMaxSize)
 	config.EnableScheduledTransaction = getConfigItemBoolValue(configFile, sectionName, "enable_scheduled_transaction", false)

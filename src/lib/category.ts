@@ -1,5 +1,6 @@
 import { reversed, keys, keysIfValueEquals, values } from '@/core/base.ts';
 import { NormalizedText } from '@/core/text.ts';
+import { IconType } from '@/core/icon.ts';
 import { type LocalizedPresetCategory, CategoryType } from '@/core/category.ts';
 import { TransactionType } from '@/core/transaction.ts';
 import {
@@ -41,6 +42,7 @@ export function localizedPresetCategoryToTransactionCategoryCreateWithSubCategor
             type: subPresetCategory.type,
             parentId: '0',
             icon: subPresetCategory.icon,
+            iconType: IconType.System,
             color: subPresetCategory.color,
             comment: '',
             clientSessionId: ''
@@ -53,6 +55,7 @@ export function localizedPresetCategoryToTransactionCategoryCreateWithSubCategor
         name: presetCategory.name,
         type: presetCategory.type,
         icon: presetCategory.icon,
+        iconType: IconType.System,
         color: presetCategory.color,
         subCategories: subCategories
     };
@@ -485,4 +488,26 @@ export function isSubCategoriesHasButNotAllChecked(category: TransactionCategory
     }
 
     return checkedCount > 0 && checkedCount < category.subCategories.length;
+}
+
+export function isAllCategoriesChecked(allCategories: Record<number, TransactionCategory[]>, includeCategoryIds: Record<string, boolean>): boolean {
+    if (!allCategories) {
+        return true;
+    }
+
+    for (const categories of values(allCategories)) {
+        for (const category of categories) {
+            if (!category.subCategories || category.subCategories.length < 1) {
+                continue;
+            }
+
+            for (const subCategory of category.subCategories) {
+                if (!includeCategoryIds[subCategory.id]) {
+                    return false;
+                }
+            }
+        }
+    }
+
+    return true;
 }
