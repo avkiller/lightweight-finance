@@ -66,7 +66,7 @@ func TestExchangeRatesApiLatestExchangeRateHandler_CzechNationalBankDataSource(t
 		"QAR", "RON", "RSD", "RUB", "RWF",
 		"SAR", "SBD", "SCR", "SDG", "SEK", "SGD", "SHP", "SLE", "SOS", "SRD", "SSP", "STN", "SVC", "SYP", "SZL",
 		"THB", "TJS", "TMT", "TND", "TOP", "TRY", "TTD", "TWD", "TZS", "UAH", "UGX", "USD", "UYU", "UZS",
-		"VND", "VUV", "WST", "XAF", "XCD", "XOF", "XPF", "YER", "ZAR", "ZMW"}
+		"VND", "VUV", "WST", "XAF", "XCD", "XCG", "XOF", "XPF", "YER", "ZAR", "ZMW"}
 
 	checkExchangeRatesHaveSpecifiedCurrencies(t, exchangeRateResponse.BaseCurrency, supportedCurrencyCodes, exchangeRateResponse.ExchangeRates)
 }
@@ -168,6 +168,22 @@ func TestExchangeRatesApiLatestExchangeRateHandler_NationalBankOfKazakhstan(t *t
 	checkExchangeRatesHaveSpecifiedCurrencies(t, exchangeRateResponse.BaseCurrency, supportedCurrencyCodes, exchangeRateResponse.ExchangeRates)
 }
 
+func TestExchangeRatesApiLatestExchangeRateHandler_CentralBankOfMalaysiaDataSource(t *testing.T) {
+	exchangeRateResponse := executeLatestExchangeRateHandler(t, settings.CentralBankOfMalaysiaDataSource)
+
+	if exchangeRateResponse == nil {
+		return
+	}
+
+	assert.Equal(t, "MYR", exchangeRateResponse.BaseCurrency)
+
+	supportedCurrencyCodes := []string{"AED", "AUD", "BND", "CAD", "CHF", "CNY", "EGP", "EUR", "GBP",
+		"HKD", "IDR", "INR", "JPY", "KHR", "KRW", "MMK", "NPR", "NZD", "PHP", "PKR", "SAR", "SGD",
+		"THB", "TWD", "USD", "VND"}
+
+	checkExchangeRatesHaveSpecifiedCurrencies(t, exchangeRateResponse.BaseCurrency, supportedCurrencyCodes, exchangeRateResponse.ExchangeRates)
+}
+
 func TestExchangeRatesApiLatestExchangeRateHandler_CentralBankOfMyanmarDataSource(t *testing.T) {
 	exchangeRateResponse := executeLatestExchangeRateHandler(t, settings.CentralBankOfMyanmarDataSource)
 
@@ -222,7 +238,7 @@ func TestExchangeRatesApiLatestExchangeRateHandler_NationalBankOfPolandDataSourc
 		"QAR", "RON", "RSD", "RUB", "RWF",
 		"SAR", "SBD", "SCR", "SDG", "SEK", "SGD", "SLE", "SOS", "SRD", "SSP", "STN", "SVC", "SYP", "SZL",
 		"THB", "TJS", "TMT", "TND", "TOP", "TRY", "TTD", "TWD", "TZS", "UAH", "UGX", "USD", "UYU", "UZS",
-		"VES", "VND", "VUV", "WST", "XAF", "XCD", "XOF", "XPF", "YER", "ZAR", "ZMW", "ZWG"}
+		"VES", "VND", "VUV", "WST", "XAF", "XCD", "XCG", "XOF", "XPF", "YER", "ZAR", "ZMW", "ZWG"}
 
 	checkExchangeRatesHaveSpecifiedCurrencies(t, exchangeRateResponse.BaseCurrency, supportedCurrencyCodes, exchangeRateResponse.ExchangeRates)
 }

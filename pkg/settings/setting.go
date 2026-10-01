@@ -154,6 +154,7 @@ const (
 	CentralBankOfHungaryDataSource     string = "central_bank_of_hungary"
 	BankOfIsraelDataSource             string = "bank_of_israel"
 	NationalBankOfKazakhstanDataSource string = "national_bank_of_kazakhstan"
+	CentralBankOfMalaysiaDataSource    string = "central_bank_of_malaysia"
 	CentralBankOfMyanmarDataSource     string = "central_bank_of_myanmar"
 	NorgesBankDataSource               string = "norges_bank"
 	NationalBankOfPolandDataSource     string = "national_bank_of_poland"
@@ -560,7 +561,7 @@ func LoadConfiguration(configFilePath string) (*Config, error) {
 		return nil, err
 	}
 
-	err = loadLLMGlobalConfiguration(config, cfgFile, "llm")
+	err = loadAIConfiguration(config, cfgFile, "ai")
 
 	if err != nil {
 		return nil, err
@@ -921,7 +922,7 @@ func loadStorageConfiguration(config *Config, configFile *ini.File, sectionName 
 	return nil
 }
 
-func loadLLMGlobalConfiguration(config *Config, configFile *ini.File, sectionName string) error {
+func loadAIConfiguration(config *Config, configFile *ini.File, sectionName string) error {
 	config.TransactionFromAITextRecognition = getConfigItemBoolValue(configFile, sectionName, "transaction_from_ai_text_recognition", false)
 	config.TransactionFromAIImageRecognition = getConfigItemBoolValue(configFile, sectionName, "transaction_from_ai_image_recognition", false)
 	config.InsightsExplorerCodingAssistant = getConfigItemBoolValue(configFile, sectionName, "insights_explorer_coding_assistant", false)
@@ -1310,6 +1311,7 @@ func loadExchangeRatesConfiguration(config *Config, configFile *ini.File, sectio
 		dataSource == CentralBankOfHungaryDataSource ||
 		dataSource == BankOfIsraelDataSource ||
 		dataSource == NationalBankOfKazakhstanDataSource ||
+		dataSource == CentralBankOfMalaysiaDataSource ||
 		dataSource == CentralBankOfMyanmarDataSource ||
 		dataSource == NorgesBankDataSource ||
 		dataSource == NationalBankOfPolandDataSource ||
