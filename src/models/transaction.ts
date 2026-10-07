@@ -20,7 +20,7 @@ export class Transaction implements TransactionInfoResponse {
     public incomeCategoryId: string = '';
     public transferCategoryId: string = '';
     public time: number;
-    public timeZone?: string; // only in new transaction
+    public timeZone?: string; // only in new transaction or scheduled transaction
     public utcOffset: number;
     public sourceAccountId: string;
     public destinationAccountId: string;
@@ -804,6 +804,10 @@ export interface TransactionReconciliationStatementResponse {
     readonly totalOutflows: string;
     readonly openingBalance: string;
     readonly closingBalance: string;
+}
+
+export interface TransactionUnreconciledCountRequest {
+    readonly accountIds: string[];
 }
 
 export interface TransactionUnreconciledCountItem {
