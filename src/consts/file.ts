@@ -364,9 +364,9 @@ export const SUPPORTED_IMPORT_FILE_CATEGORY_AND_TYPES: ImportFileCategoryAndType
                 extensions: '.beancount'
             },
             {
-                type: 'qianji_csv',
+                type: 'qianji_xlsx',
                 name: 'Qianji APP Data Export File',
-                extensions: '.csv'
+                extensions: '.xlsx'
             },
             {
                 type: 'feidee_mymoney_csv',

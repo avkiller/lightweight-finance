@@ -179,3 +179,5 @@ data/
 public/img/layers*.png
 public/img/marker*.png
 *.bak
+*.tmp
+ezbookkeeping.zip
