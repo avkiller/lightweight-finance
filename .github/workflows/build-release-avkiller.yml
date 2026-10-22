@@ -9,7 +9,7 @@ on:
      version:
         description: 'Version for this release'
         type: string
-        default: 'v2.0.0'
+        default: 'v2.1.0'
         required: true
      go-version:
        required: false
@@ -80,7 +80,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '26.8.1'
+          node-version: '26.10.0'
           
       - uses: actions/setup-go@v6
         with:
