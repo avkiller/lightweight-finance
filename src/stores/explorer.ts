@@ -82,6 +82,7 @@ import {
     getFiscalYearFromUnixTime
 } from '@/lib/datetime.ts';
 import { generateRandomUUID } from '@/lib/misc.ts';
+import { isTransactionsEquals } from '@/lib/transaction.ts';
 import services, { type ApiResponsePromise } from '@/lib/services.ts';
 import logger from '@/lib/logger.ts';
 
@@ -1680,7 +1681,7 @@ export const useExplorersStore = defineStore('explorers', () => {
                     updateTransactionExplorerInvalidState(false);
                 }
 
-                if (force && data.result && isEquals(transactionExplorerAllData.value, data.result)) {
+                if (force && data.result && isTransactionsEquals(transactionExplorerAllData.value, data.result)) {
                     reject({ message: 'Data is up to date', isUpToDate: true });
                     return;
                 }
@@ -1762,9 +1763,9 @@ export const useExplorersStore = defineStore('explorers', () => {
                     return;
                 }
 
-                const transactionCategory = InsightsExplorer.of(data.result);
+                const insightsExplorer = InsightsExplorer.of(data.result);
 
-                resolve(transactionCategory);
+                resolve(insightsExplorer);
             }).catch(error => {
                 logger.error('failed to load exploration info', error);
 

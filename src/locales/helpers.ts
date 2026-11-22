@@ -1,5 +1,5 @@
 import { reactive } from 'vue';
-import { useI18n as useVueI18n } from 'vue-i18n';
+import { type I18nOptions as VueI18nOptions, useI18n as useVueI18n } from 'vue-i18n';
 import moment from 'moment-timezone';
 
 import {
@@ -8,14 +8,21 @@ import {
     type TypeAndName,
     type TypeAndNameWithAlternativeName,
     type TypeAndDisplayName,
+    type NameAndDisplayName,
     type LocalizedSwitchOption
 } from '@/core/base.ts';
 
 import {
     type LanguageInfo,
-    type LanguageOption,
-    ALL_LANGUAGES,
-    DEFAULT_LANGUAGE
+    type LanguageMessages,
+    type LanguageMessagesCacheEntry,
+    type LanguageOption
+} from '@/core/language.ts';
+
+import {
+    DEFAULT_LANGUAGE,
+    DEFAULT_LANGUAGE_CONTENT,
+    ALL_LANGUAGES
 } from '@/locales/index.ts';
 
 import {
@@ -189,7 +196,7 @@ import {
     type LocalizedImportFileTypeSubType,
     type LocalizedImportFileTypeSupportedEncodings,
     type LocalizedImportFileDocument
-} from '@/core/file.ts';
+} from '@/core/import_transaction.ts';
 
 import type { LocaleDefaultSettings } from '@/core/setting.ts';
 import type { ErrorResponse } from '@/core/api.ts';
@@ -200,7 +207,8 @@ import { ALL_CURRENCIES, ACCOUNT_CURRENCY_NOT_SET_VALUE } from '@/consts/currenc
 import { DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES, DEFAULT_TRANSFER_CATEGORIES } from '@/consts/category.ts';
 import { PARSE_TRANSACTION_API_URL_PATH, KnownErrorCode, SPECIFIED_API_NOT_FOUND_ERRORS, PARAMETERIZED_ERRORS, SUPPORTED_PARSE_TRANSACTION_RECORD_ID_TYPES } from '@/consts/api.ts';
 import { OAUTH2_PROVIDER_DISPLAY_NAME } from '@/consts/oauth2.ts';
-import { DEFAULT_DOCUMENT_LANGUAGE_FOR_IMPORT_FILE, SUPPORTED_DOCUMENT_LANGUAGES_FOR_IMPORT_FILE, SUPPORTED_IMPORT_FILE_CATEGORY_AND_TYPES } from '@/consts/file.ts';
+import { DEFAULT_DOCUMENT_LANGUAGE_FOR_IMPORT_FILE, SUPPORTED_DOCUMENT_LANGUAGES_FOR_IMPORT_FILE, SUPPORTED_IMPORT_FILE_CATEGORY_AND_TYPES } from '@/consts/import_transaction.ts';
+import { ALL_MCP_TOOLS } from '@/consts/mcp.ts';
 
 import {
     type CategorizedAccount,
@@ -284,6 +292,9 @@ import {
 } from '@/lib/account.ts';
 
 import {
+    getAllLanguageMessagesCache,
+    getLanguageMessagesFromCacheEntries,
+    setLanguageMessagesCache,
     getSessionCurrentLanguageKey,
     setSessionCurrentLanguageKey,
     getSessionLanguagePreview,
@@ -299,9 +310,9 @@ import { useSettingsStore } from '@/stores/setting.ts';
 import { useUserStore } from '@/stores/user.ts';
 import { useExchangeRatesStore } from '@/stores/exchangeRates.ts';
 
-
-interface PreviewLanguageMessages {
-    [key: string]: string | PreviewLanguageMessages;
+export type I18nOptions = VueI18nOptions & {
+    legacy: false;
+    messages: Record<string, object>;
 }
 
 export interface LocalizedErrorParameter {
@@ -315,13 +326,39 @@ export interface LocalizedError {
     readonly parameters?: LocalizedErrorParameter[];
 }
 
+const availableLanguageMessages: Record<string, LanguageMessages> = (function (): Record<string, LanguageMessages> {
+    const ret: Record<string, LanguageMessages> = {};
+    const cachedLanguageMessages: LanguageMessagesCacheEntry[] = getAllLanguageMessagesCache();
+
+    for (const languageKey of keys(ALL_LANGUAGES)) {
+        if (languageKey === DEFAULT_LANGUAGE) {
+            ret[DEFAULT_LANGUAGE] = DEFAULT_LANGUAGE_CONTENT;
+        } else {
+            try {
+                const languageMessages: LanguageMessages | undefined = getLanguageMessagesFromCacheEntries(languageKey, cachedLanguageMessages);
+
+                if (languageMessages) {
+                    ret[languageKey] = languageMessages;
+                }
+            } catch (ex) {
+                logger.warn(`failed to load cached language messages for ${languageKey}`, ex);
+            }
+        }
+    }
+
+    return ret;
+})();
+const loadedLanguages: Record<string, boolean> = {
+    [DEFAULT_LANGUAGE]: true
+};
+
 const allLanguageActualRtlSetting = reactive<Record<string, boolean>>({});
 const previewedLanguages = reactive<Record<string, boolean>>({});
 
-function parsePreviewMessages(json: string): PreviewLanguageMessages {
+function parsePreviewLanguageMessages(json: string): LanguageMessages {
     const value: unknown = JSON.parse(json.replace(/^\uFEFF/, ''));
 
-    function validate(value: unknown, path: string): asserts value is PreviewLanguageMessages {
+    function validate(value: unknown, path: string): asserts value is LanguageMessages {
         if (!value || !isObject(value) || isArray(value)) {
             throw new Error(`${path} must be a JSON object containing strings or nested objects.`);
         }
@@ -341,17 +378,21 @@ function parsePreviewMessages(json: string): PreviewLanguageMessages {
     return value;
 }
 
-export function getI18nOptions(): object {
+export function getI18nOptions(): I18nOptions {
     return {
         legacy: false,
         locale: DEFAULT_LANGUAGE,
         fallbackLocale: DEFAULT_LANGUAGE,
         formatFallbackMessages: true,
         messages: (function () {
-            const messages: Record<string, object> = {};
+            const messages: Record<string, LanguageMessages> = {};
 
-            for (const [languageKey, languageInfo] of entries(ALL_LANGUAGES)) {
-                messages[languageKey] = languageInfo.content;
+            for (const languageKey of keys(ALL_LANGUAGES)) {
+                if (isObject(availableLanguageMessages[languageKey])) {
+                    messages[languageKey] = availableLanguageMessages[languageKey];
+                } else {
+                    messages[languageKey] = {};
+                }
 
                 if (!isLanguagePreviewEnabled()) {
                     continue;
@@ -361,7 +402,7 @@ export function getI18nOptions(): object {
 
                 if (preview && preview.data && preview.textDirection) {
                     try {
-                        messages[languageKey] = parsePreviewMessages(preview.data);
+                        messages[languageKey] = parsePreviewLanguageMessages(preview.data);
                         allLanguageActualRtlSetting[languageKey] = preview.textDirection === TextDirection.RTL;
                         previewedLanguages[languageKey] = true;
                     } catch (ex) {
@@ -378,7 +419,7 @@ export function getI18nOptions(): object {
 export function getRtlLocales(): Record<string, boolean> {
     for (const [languageKey, languageInfo] of entries(ALL_LANGUAGES)) {
         if (!isDefined(allLanguageActualRtlSetting[languageKey])) {
-            allLanguageActualRtlSetting[languageKey] = languageInfo.textDirection === 'rtl';
+            allLanguageActualRtlSetting[languageKey] = languageInfo.textDirection === TextDirection.RTL;
         }
     }
 
@@ -769,6 +810,19 @@ export function useI18n() {
         return ret;
     }
 
+    function getLocalizedNameDisplayName(nameDisplayNames: NameAndDisplayName[]): NameAndDisplayName[] {
+        const ret: NameAndDisplayName[] = [];
+
+        for (const item of nameDisplayNames) {
+            ret.push({
+                name: item.name,
+                displayName: t(item.displayName)
+            });
+        }
+
+        return ret;
+    }
+
     function getLocalizedNumeralSeparatorFormats<T extends NumeralSymbolType>(allSeparatorArray: T[], localeDefaultType: T | undefined, systemDefaultType: T, languageDefaultValue: number): LocalizedNumeralSymbolType[] {
         let defaultSeparatorType: T | undefined = localeDefaultType;
 
@@ -1137,12 +1191,7 @@ export function useI18n() {
 
     function getCurrentLanguageTextDirection(): TextDirection {
         const currentLanguageInfo = getCurrentLanguageInfo();
-
-        if (currentLanguageInfo.textDirection === 'rtl') {
-            return TextDirection.RTL;
-        } else {
-            return TextDirection.LTR;
-        }
+        return currentLanguageInfo.textDirection;
     }
 
     function getCurrentLanguageMessagesJson(): string {
@@ -1847,7 +1896,7 @@ export function useI18n() {
         const languageInfo = ALL_LANGUAGES[languageKey];
 
         if (languageInfo && previewedLanguages[languageKey]) {
-            return { ...languageInfo, textDirection: allLanguageActualRtlSetting[languageKey] ? 'rtl' : 'ltr' };
+            return { ...languageInfo, textDirection: allLanguageActualRtlSetting[languageKey] ? TextDirection.RTL : TextDirection.LTR };
         }
 
         return languageInfo;
@@ -2666,19 +2715,149 @@ export function useI18n() {
         }
     }
 
-    function setLanguage(languageKey: string | null, force?: boolean): LocaleDefaultSettings | null {
+    function getLocalizedImportTransactionCustomSampleScript(currentTimezoneName: string): string {
+        return `// ${t('sample.importTransactionCustomScript.headerComment')}
+/**
+ * ${t('sample.importTransactionCustomScript.functionDescription')}
+ * @param {string[]} row - ${t('sample.importTransactionCustomScript.functionParamRowDescription')}
+ * @param {number} index - ${t('sample.importTransactionCustomScript.functionParamIndexDescription')}
+ * @returns {ImportTransaction|null} ${t('sample.importTransactionCustomScript.functionReturnDescription')}
+ */
+function parse(row, index) {
+    if (index < 1) {
+        return null;
+    }
+
+    return {
+        // ${t('sample.importTransactionCustomScript.fieldTimeDescription')}
+        time: row[0],
+        // ${t('sample.importTransactionCustomScript.fieldUtcOffsetDescription')}
+        utcOffset: ${currentTimezoneName ? 'parseUtcOffset(\'' + currentTimezoneName + '\')' : '\'' + getTimezoneOffsetMinutes(getCurrentUnixTime()) + '\''},
+        // ${t('sample.importTransactionCustomScript.fieldTypeDescription')}
+        type: TransactionType.Expense,
+        // ${t('sample.importTransactionCustomScript.fieldCategoryNameDescription')}
+        categoryName: row[4],
+        // ${t('sample.importTransactionCustomScript.fieldSourceAccountNameDescription')}
+        sourceAccountName: row[5],
+        // ${t('sample.importTransactionCustomScript.fieldDestinationAccountNameDescription')}
+        destinationAccountName: row[8],
+        // ${t('sample.importTransactionCustomScript.fieldSourceAmountDescription')}
+        sourceAmount: row[7],
+        // ${t('sample.importTransactionCustomScript.fieldDestinationAmountDescription')}
+        destinationAmount: row[10],
+        // ${t('sample.importTransactionCustomScript.fieldGeoLocationDescription')}
+        geoLocation: undefined,
+        // ${t('sample.importTransactionCustomScript.fieldTagNamesDescription')}
+        tagNames: '',
+        // ${t('sample.importTransactionCustomScript.fieldCommentDescription')}
+        description: row[13]
+    };
+}`;
+    }
+
+    function loadLanguageResources(languageKey: string): Promise<LanguageMessages> {
+        const languageInfo = getLanguageInfo(languageKey);
+
+        if (!languageInfo) {
+            return Promise.reject({ message: 'Unable to load language resources. Please try again.' });
+        }
+
+        return loadLanguageMessages(languageKey, languageInfo).catch(ex => {
+            logger.error(`failed to load language resources for ${languageKey}`, ex);
+            return Promise.reject({ message: 'Unable to load language resources. Please try again.' });
+        });
+    }
+
+    function setLanguage(languageKey: string | null, force?: boolean): Promise<LocaleDefaultSettings | null> {
         if (!languageKey) {
             languageKey = getDefaultLanguage();
             logger.info(`No specified language, use browser default language ${languageKey}`);
         }
 
-        const languageInfo = getLanguageInfo(languageKey);
+        let languageInfo = getLanguageInfo(languageKey);
 
         if (!languageInfo) {
             languageKey = getDefaultLanguage();
+            languageInfo = getLanguageInfo(languageKey);
             logger.warn(`Not found language ${languageKey}, use browser default language ${languageKey}`);
         }
 
+        if (!languageKey || !languageInfo) {
+            logger.warn('No default language found');
+            return Promise.reject();
+        }
+
+        return new Promise((resolve, reject) => {
+            loadLanguageMessages(languageKey, languageInfo).then(() => {
+                const localeDefaultSettings = applyLanguage(languageKey, force);
+                applyTextDirection(languageInfo.textDirection);
+                resolve(localeDefaultSettings);
+            }).catch(ex => {
+                logger.error(`failed to load language resources for ${languageKey}`, ex);
+                reject({ message: 'Unable to load language resources. Please try again.' });
+            });
+        });
+    }
+
+    function loadLanguageMessages(languageKey: string, languageInfo: LanguageInfo): Promise<LanguageMessages> {
+        const cachedLanguageMessages: LanguageMessagesCacheEntry[] = getAllLanguageMessagesCache();
+        const isLoaded = loadedLanguages[languageKey];
+        const needReload = !isLoaded;
+        let messages = availableLanguageMessages[languageKey];
+
+        if (!messages) {
+            messages = getLanguageMessagesFromCacheEntries(languageKey, cachedLanguageMessages);
+        }
+
+        if (messages) {
+            if (needReload) {
+                languageInfo.loadContent().then(messages => {
+                    if (!messages || !isObject(messages) || !('global' in messages)) {
+                        logger.warn(`failed to load language messages for ${languageKey}`);
+                        return;
+                    }
+
+                    if (!hasPreviewedConfiguration(languageKey)) {
+                        setLocaleMessage(languageKey, messages);
+                    }
+
+                    availableLanguageMessages[languageKey] = messages;
+                    setLanguageMessagesCache(languageKey, messages);
+                    loadedLanguages[languageKey] = true;
+                }).catch(ex => {
+                    logger.warn(`failed to load language resources for ${languageKey}`, ex);
+                });
+            }
+
+            if (!hasPreviewedConfiguration(languageKey)) {
+                setLocaleMessage(languageKey, messages);
+            }
+
+            return Promise.resolve(messages);
+        }
+
+        return new Promise<LanguageMessages>((resolve, reject) => {
+            languageInfo.loadContent().then(messages => {
+                if (!messages || !isObject(messages) || !('global' in messages)) {
+                    reject(new Error(`Failed to load language messages for ${languageKey}`));
+                    return;
+                }
+
+                if (!hasPreviewedConfiguration(languageKey)) {
+                    setLocaleMessage(languageKey, messages);
+                }
+
+                availableLanguageMessages[languageKey] = messages;
+                setLanguageMessagesCache(languageKey, messages);
+                loadedLanguages[languageKey] = true;
+                resolve(messages);
+            }).catch(ex => {
+                reject(ex);
+            });
+        });
+    }
+
+    function applyLanguage(languageKey: string, force?: boolean): LocaleDefaultSettings | null {
         if (!force && locale.value === languageKey) {
             logger.info(`Current locale is already ${languageKey}`);
             return null;
@@ -2706,30 +2885,6 @@ export function useI18n() {
         services.setLocale(languageKey);
         document.querySelector('html')?.setAttribute('lang', languageKey);
 
-        if (document.querySelector('html')?.getAttribute('data-dir-mode') === 'static') {
-            if (languageInfo && languageInfo.textDirection === TextDirection.LTR) {
-                if (location.search.includes('rtl')) {
-                    const url = new URL(window.location.href);
-                    url.search = '';
-                    url.hash = '#/';
-                    window.location.replace(url.toString());
-                }
-            } else if (languageInfo && languageInfo.textDirection === TextDirection.RTL) {
-                if (!location.search.includes('rtl')) {
-                    const url = new URL(window.location.href);
-                    url.searchParams.set('rtl', '');
-                    url.hash = '#/';
-                    window.location.replace(url.toString());
-                }
-            }
-        } else {
-            if (languageInfo && languageInfo.textDirection === TextDirection.LTR) {
-                document.querySelector('html')?.removeAttribute('dir');
-            } else if (languageInfo && languageInfo.textDirection === TextDirection.RTL) {
-                document.querySelector('html')?.setAttribute('dir', 'rtl');
-            }
-        }
-
         const defaultCurrency = getDefaultCurrency();
         const defaultFirstDayOfWeekName = getDefaultFirstDayOfWeek();
         let defaultFirstDayOfWeek = WeekDay.DefaultFirstDay.type;
@@ -2738,12 +2893,48 @@ export function useI18n() {
             defaultFirstDayOfWeek = (WeekDay.parse(defaultFirstDayOfWeekName) as WeekDay).type;
         }
 
+        let preferredExpenseAmountColor = PresetAmountColor.DefaultExpenseColor;
+        let preferredIncomeAmountColor = PresetAmountColor.DefaultIncomeColor;
+
+        if (languageKey !== 'zh-Hans' && languageKey !== 'zh-Hant' && languageKey !== 'ja' && languageKey !== 'ko') {
+            preferredExpenseAmountColor = PresetAmountColor.Red;
+            preferredIncomeAmountColor = PresetAmountColor.Green;
+        }
+
         const localeDefaultSettings: LocaleDefaultSettings = {
             currency: defaultCurrency,
-            firstDayOfWeek: defaultFirstDayOfWeek
+            firstDayOfWeek: defaultFirstDayOfWeek,
+            preferredExpenseAmountColor: preferredExpenseAmountColor,
+            preferredIncomeAmountColor: preferredIncomeAmountColor
         };
 
         return localeDefaultSettings;
+    }
+
+    function applyTextDirection(textDirection: TextDirection): void {
+        if (document.querySelector('html')?.getAttribute('data-dir-mode') === 'static') {
+            if (textDirection === TextDirection.LTR) {
+                if (location.search.includes('rtl')) {
+                    const url = new URL(window.location.href);
+                    url.search = '';
+                    url.hash = '#/';
+                    window.location.replace(url.toString());
+                }
+            } else if (textDirection === TextDirection.RTL) {
+                if (!location.search.includes('rtl')) {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('rtl', '');
+                    url.hash = '#/';
+                    window.location.replace(url.toString());
+                }
+            }
+        } else {
+            if (textDirection === TextDirection.LTR) {
+                document.querySelector('html')?.removeAttribute('dir');
+            } else if (textDirection === TextDirection.RTL) {
+                document.querySelector('html')?.setAttribute('dir', 'rtl');
+            }
+        }
     }
 
     function hasPreviewedConfiguration(languageKey: string): boolean {
@@ -2751,29 +2942,44 @@ export function useI18n() {
     }
 
     function previewLanguage(json: string, textDirection: TextDirection): void {
-        const messages: PreviewLanguageMessages = parsePreviewMessages(json);
-        setSessionLanguagePreview(locale.value, {
+        const languageKey = locale.value;
+        const messages: LanguageMessages = parsePreviewLanguageMessages(json);
+        setSessionLanguagePreview(languageKey, {
             data: json,
             textDirection: textDirection
         });
-        setLocaleMessage(locale.value, messages);
-        allLanguageActualRtlSetting[locale.value] = textDirection === TextDirection.RTL;
-        previewedLanguages[locale.value] = true;
-        settingsStore.updateLocalizedDefaultSettings(setLanguage(locale.value, true));
+        setLocaleMessage(languageKey, messages);
+        allLanguageActualRtlSetting[languageKey] = textDirection === TextDirection.RTL;
+        previewedLanguages[languageKey] = true;
+
+        settingsStore.updateLocalizedDefaultSettings(applyLanguage(languageKey, true));
+        applyTextDirection(textDirection);
     }
 
-    function restoreLanguagePreview(): void {
-        const languageInfo = ALL_LANGUAGES[locale.value];
+    function restoreLanguagePreview(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const languageKey = locale.value;
+            const languageInfo = ALL_LANGUAGES[languageKey];
 
-        if (!languageInfo) {
-            return;
-        }
+            if (!languageInfo) {
+                resolve();
+                return;
+            }
 
-        setSessionLanguagePreview(locale.value, null);
-        setLocaleMessage(locale.value, JSON.parse(JSON.stringify(languageInfo.content)));
-        allLanguageActualRtlSetting[locale.value] = languageInfo.textDirection === 'rtl';
-        delete previewedLanguages[locale.value];
-        settingsStore.updateLocalizedDefaultSettings(setLanguage(locale.value, true));
+            loadLanguageMessages(languageKey, languageInfo).then(messages => {
+                setSessionLanguagePreview(languageKey, null);
+                setLocaleMessage(languageKey, messages);
+                allLanguageActualRtlSetting[languageKey] = languageInfo.textDirection === TextDirection.RTL;
+                delete previewedLanguages[languageKey];
+
+                settingsStore.updateLocalizedDefaultSettings(applyLanguage(languageKey, true));
+                applyTextDirection(languageInfo.textDirection);
+                resolve();
+            }).catch(ex => {
+                logger.error(`failed to restore language messages for ${languageKey}`, ex);
+                reject(ex);
+            });
+        });
     }
 
     function setTimeZone(timezone: string): void {
@@ -2784,9 +2990,9 @@ export function useI18n() {
         }
     }
 
-    function initLocale(lastUserLanguage?: string, timezone?: string): LocaleDefaultSettings | null {
+    function initLocale(lastUserLanguage?: string, timezone?: string): Promise<LocaleDefaultSettings | null> {
         const sessionLanguageKey: string = getSessionCurrentLanguageKey();
-        let localeDefaultSettings: LocaleDefaultSettings | null = null;
+        let localeDefaultSettings: Promise<LocaleDefaultSettings | null>;
 
         if (lastUserLanguage && getLanguageInfo(lastUserLanguage)) {
             logger.info(`Last user language is ${lastUserLanguage}`);
@@ -2888,6 +3094,7 @@ export function useI18n() {
         getAllTransactionExplorerValueMetrics: (operators?: TransactionExplorerValueMetric[]) => getLocalizedNameValue(operators ?? TransactionExplorerValueMetric.values()),
         getAllTransactionExplorerChartTypes: (operators?: TransactionExplorerChartType[]) => getLocalizedNameValue(operators ?? TransactionExplorerChartType.values()),
         getAllTransactionExplorerCustomChartDisplayLayouts: () => getLocalizedDisplayNameAndType(TransactionExplorerCustomChartDisplayLayout.values()),
+        getAllMCPTools: () => getLocalizedNameDisplayName(ALL_MCP_TOOLS),
         // get localized info
         getLanguageInfo,
         getEnableDisableOption: (value: boolean) => t(value ? 'Enabled' : 'Disabled'),
@@ -2996,7 +3203,9 @@ export function useI18n() {
         getLocalizedFileEncodingName,
         getLocalizedOAuth2ProviderName,
         getLocalizedOAuth2LoginText,
+        getLocalizedImportTransactionCustomSampleScript,
         // localization setting functions
+        loadLanguageResources,
         setLanguage,
         hasPreviewedConfiguration,
         previewLanguage,

@@ -270,7 +270,10 @@
                                             </div>
                                         </div>
                                         <div class="item-text">
-                                            <div class="transaction-description" v-if="transaction.comment">
+                                            <div class="transaction-description" v-if="transaction.comment || (showPictureIndicatorInTransactionListPage && transaction.pictures?.length)">
+                                                <f7-icon class="transaction-picture-indicator" f7="photo" size="16"
+                                                         :aria-label="tt('Transaction Pictures')" role="img"
+                                                         v-if="showPictureIndicatorInTransactionListPage && transaction.pictures?.length"/>
                                                 <span>{{ transaction.comment }}</span>
                                             </div>
                                         </div>
@@ -739,6 +742,7 @@ const {
     selectedAccountDefaultCurrency,
     showTotalAmountInTransactionListPage,
     showTagInTransactionListPage,
+    showPictureIndicatorInTransactionListPage,
     allDateRanges,
     allAccounts,
     allAccountsMap,
@@ -1043,27 +1047,29 @@ function reload(done?: () => void): void {
             const currentMonth = currentMonthMinDate.getGregorianCalendarMonth();
 
             return transactionsStore.loadMonthlyAllTransactions({
+                force: force,
                 year: currentYear,
                 month: currentMonth,
                 mustHavePictures: isGalleryMode,
-                withPictures: isGalleryMode,
+                withPictures: isGalleryMode || showPictureIndicatorInTransactionListPage.value,
                 autoExpand: true,
                 defaultCurrency: selectedAccountDefaultCurrency.value
             });
         } else {
             return transactionsStore.loadTransactions({
+                force: force,
                 reload: true,
                 mustHavePictures: isGalleryMode,
-                withPictures: isGalleryMode,
+                withPictures: isGalleryMode || showPictureIndicatorInTransactionListPage.value,
                 autoExpand: true,
                 defaultCurrency: selectedAccountDefaultCurrency.value
             });
         }
-    }).then(() => {
+    }).then(data => {
         done?.();
 
         if (force) {
-            showToast('Data has been updated');
+            showToast(data.isUpToDate ? 'Data is up to date' : 'Data has been updated');
         }
 
         loading.value = false;
@@ -1101,7 +1107,7 @@ function loadMore(autoExpand: boolean): void {
     transactionsStore.loadTransactions({
         reload: false,
         mustHavePictures: isGalleryMode,
-        withPictures: isGalleryMode,
+        withPictures: isGalleryMode || showPictureIndicatorInTransactionListPage.value,
         autoExpand: autoExpand,
         defaultCurrency: selectedAccountDefaultCurrency.value
     }).then(() => {
@@ -1626,6 +1632,11 @@ html[dir="rtl"] .list.transaction-info-list li.transaction-info .transaction-day
     line-height: 20px;
     padding-top: 2px;
     padding-bottom: 2px;
+
+    > .transaction-picture-indicator {
+        vertical-align: text-bottom;
+        margin-inline-end: 4px;
+    }
 }
 
 .list.transaction-info-list li.transaction-info .chip.transaction-tag {
