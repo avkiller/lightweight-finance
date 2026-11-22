@@ -317,6 +317,11 @@ export const SUPPORTED_IMPORT_FILE_CATEGORY_AND_TYPES: ImportFileCategoryAndType
                     supportMultiLanguages: 'zh-Hans',
                     anchor: '如何获取随手记神象云账本数据导出文件'
                 }
+            },
+            {
+                type: 'qianji_xlsx',
+                name: 'Qianji APP Data Export File',
+                extensions: '.xlsx'
             }
         ]
     }
