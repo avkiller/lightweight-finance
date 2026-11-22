@@ -283,6 +283,12 @@ export const useSettingsStore = defineStore('settings', () => {
         updateUserApplicationCloudSettingValue('showTagInTransactionListPage', value);
     }
 
+    function setShowPictureIndicatorInTransactionListPage(value: boolean): void {
+        updateApplicationSettingsValue('showPictureIndicatorInTransactionListPage', value);
+        appSettings.value.showPictureIndicatorInTransactionListPage = value;
+        updateUserApplicationCloudSettingValue('showPictureIndicatorInTransactionListPage', value);
+    }
+
     function setDefaultKeywordMatchModeInTransactionListPage(value: number): void {
         updateApplicationSettingsValue('defaultKeywordMatchModeInTransactionListPage', value);
         appSettings.value.defaultKeywordMatchModeInTransactionListPage = value;
@@ -423,6 +429,12 @@ export const useSettingsStore = defineStore('settings', () => {
         updateApplicationSettingsValue('mapCacheExpiration', value);
         appSettings.value.mapCacheExpiration = value;
         updateUserApplicationCloudSettingValue('mapCacheExpiration', value);
+    }
+
+    function setTransactionPictureCacheExpiration(value: number): void {
+        updateApplicationSettingsValue('transactionPictureCacheExpiration', value);
+        appSettings.value.transactionPictureCacheExpiration = value;
+        updateUserApplicationCloudSettingValue('transactionPictureCacheExpiration', value);
     }
 
     function setExchangeRatesDataCacheExpiration(value: number): void {
@@ -602,6 +614,17 @@ export const useSettingsStore = defineStore('settings', () => {
         }
     }
 
+    function getLocaleDefaultSettingsSnapshot(): LocaleDefaultSettings {
+        const snapshot: LocaleDefaultSettings = {
+            currency: localeDefaultSettings.value.currency,
+            firstDayOfWeek: localeDefaultSettings.value.firstDayOfWeek,
+            preferredExpenseAmountColor: localeDefaultSettings.value.preferredExpenseAmountColor,
+            preferredIncomeAmountColor: localeDefaultSettings.value.preferredIncomeAmountColor
+        };
+
+        return snapshot;
+    }
+
     function updateLocalizedDefaultSettings(newLocaleDefaultSettings: LocaleDefaultSettings | null) {
         if (!newLocaleDefaultSettings) {
             return;
@@ -609,6 +632,8 @@ export const useSettingsStore = defineStore('settings', () => {
 
         localeDefaultSettings.value.currency = newLocaleDefaultSettings.currency;
         localeDefaultSettings.value.firstDayOfWeek = newLocaleDefaultSettings.firstDayOfWeek;
+        localeDefaultSettings.value.preferredExpenseAmountColor = newLocaleDefaultSettings.preferredExpenseAmountColor;
+        localeDefaultSettings.value.preferredIncomeAmountColor = newLocaleDefaultSettings.preferredIncomeAmountColor;
     }
 
     return {
@@ -649,6 +674,7 @@ export const useSettingsStore = defineStore('settings', () => {
         setShowTotalAmountInTransactionListPage,
         setTotalAmountTypeInTransactionListPage,
         setShowTagInTransactionListPage,
+        setShowPictureIndicatorInTransactionListPage,
         setDefaultKeywordMatchModeInTransactionListPage,
         // -- Transaction Edit Page
         setQuickSaveButtonStyleInMobileTransactionListPage,
@@ -678,6 +704,7 @@ export const useSettingsStore = defineStore('settings', () => {
         setCurrencySortByInExchangeRatesPage,
         // -- Browser Cache Management
         setMapCacheExpiration,
+        setTransactionPictureCacheExpiration,
         setExchangeRatesDataCacheExpiration,
         // -- Statistics Settings
         setStatisticsDefaultChartDataType,
@@ -696,6 +723,7 @@ export const useSettingsStore = defineStore('settings', () => {
         createApplicationCloudSettings,
         setApplicationSettingsFromCloudSettings,
         updateApplicationSyncSettingKeys,
+        getLocaleDefaultSettingsSnapshot,
         updateLocalizedDefaultSettings
     };
 });

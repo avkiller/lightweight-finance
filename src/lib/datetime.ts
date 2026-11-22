@@ -468,7 +468,7 @@ class MomentDateTime implements DateTime {
 }
 
 export function getAllowedYearRange(): [number, number] {
-    return [2000, moment().year() + 1];
+    return [2000, moment().year() + 5];
 }
 
 export function isYear0BasedMonthValid(year: number, month0base: number): boolean {
@@ -477,6 +477,14 @@ export function isYear0BasedMonthValid(year: number, month0base: number): boolea
     }
 
     return year > 0 && month0base >= 0 && month0base <= 11;
+}
+
+export function isYear1BasedMonthValid(year: number, month1base: number): boolean {
+    if (!isNumber(year) || !isNumber(month1base)) {
+        return false;
+    }
+
+    return year > 0 && month1base >= 1 && month1base <= 12;
 }
 
 export function getYear0BasedMonthObjectFromUnixTime(unixTime: number): Year0BasedMonth {
@@ -509,6 +517,30 @@ export function getYear0BasedMonthObjectFromString(yearMonth: TextualYearMonth |
     return {
         year: year,
         month0base: month0base
+    };
+}
+
+export function getYear1BasedMonthObjectFromString(yearMonth: TextualYearMonth | ''): Year1BasedMonth | null {
+    if (!isString(yearMonth)) {
+        return null;
+    }
+
+    const items = yearMonth.split('-');
+
+    if (items.length !== 2) {
+        return null;
+    }
+
+    const year = parseInt(items[0] as string);
+    const month1base = parseInt(items[1] as string);
+
+    if (!isYear1BasedMonthValid(year, month1base)) {
+        return null;
+    }
+
+    return {
+        year: year,
+        month1base: month1base
     };
 }
 
@@ -1144,17 +1176,20 @@ export function getAllBillingCyclesStartAndEndUnixTimes(startUnixTime: number, e
     while (unixTime <= endUnixTime) {
         const currentDateTime = parseDateTimeFromUnixTime(unixTime);
         let currentBillingCycleMinDateTime: DateTime;
+        let currentBillingCycleMaxDateTime: DateTime;
 
         if (currentDateTime.getGregorianCalendarDay() > statementDate) {
             const currentMonthMinDateTime = getMonthFirstDateTimeBySpecifiedUnixTime(unixTime);
+            const nextMonthMinDateTime = currentMonthMinDateTime.add(1, 'months');
             currentBillingCycleMinDateTime = currentMonthMinDateTime.add(statementDate, 'days');
+            currentBillingCycleMaxDateTime = nextMonthMinDateTime.add(statementDate, 'days').subtract(1, 'seconds');
         } else {
             const currentMonthMinDateTime = getMonthFirstDateTimeBySpecifiedUnixTime(unixTime);
             const previousMonthMinDateTime = currentMonthMinDateTime.add(-1, 'months');
             currentBillingCycleMinDateTime = previousMonthMinDateTime.add(statementDate, 'days');
+            currentBillingCycleMaxDateTime = currentMonthMinDateTime.add(statementDate, 'days').subtract(1, 'seconds');
         }
 
-        const currentBillingCycleMaxDateTime = currentBillingCycleMinDateTime.add(1, 'months').subtract(1, 'seconds');
         const yearMonth: Year0BasedMonth = {
             year: currentBillingCycleMaxDateTime.getGregorianCalendarYear(),
             month0base: currentBillingCycleMaxDateTime.getGregorianCalendarMonth() - 1
@@ -1205,11 +1240,14 @@ export function getShiftedDateRange(minTime: number, maxTime: number, scale: num
     const firstDayOfMonth = minDateTime.clone().startOf('month');
     const lastDayOfMonth = maxDateTime.clone().endOf('month');
 
+    const isMinTimeStartOfDay = minDateTime.clone().startOf('day').unix() === minDateTime.unix();
+    const isMaxTimeEndOfDay = maxDateTime.clone().endOf('day').unix() === maxDateTime.unix();
+
     // check whether the date range matches full months
     if (firstDayOfMonth.unix() === minDateTime.unix() && lastDayOfMonth.unix() === maxDateTime.unix()) {
         const months = maxDateTime.year() * 12 + (maxDateTime.month() + 1) - minDateTime.year() * 12 - (minDateTime.month() + 1) + 1;
-        const newMinDateTime = minDateTime.add(months * scale, 'months');
-        const newMaxDateTime = newMinDateTime.clone().add(months, 'months').subtract(1, 'seconds');
+        const newMinDateTime = minDateTime.add(months * scale, 'months').startOf('day');
+        const newMaxDateTime = newMinDateTime.clone().add(months, 'months').startOf('day').subtract(1, 'seconds');
 
         return {
             minTime: newMinDateTime.unix(),
@@ -1217,11 +1255,41 @@ export function getShiftedDateRange(minTime: number, maxTime: number, scale: num
         };
     }
 
-    // check whether the date range matches one full year
-    if (minDateTime.clone().add(1, 'years').subtract(1, 'seconds').unix() === maxDateTime.unix() ||
-        maxDateTime.clone().subtract(1, 'years').add(1, 'seconds').unix() === minDateTime.unix()) {
-        const newMinDateTime = minDateTime.add(1 * scale, 'years');
-        const newMaxDateTime = maxDateTime.add(1 * scale, 'years');
+    // check whether the date range matches one full year or month
+    for (const unit of ['years', 'months'] as const) {
+        const isMinAnchored = minDateTime.clone().add(1, unit).subtract(1, 'seconds').unix() === maxDateTime.unix();
+
+        if (!isMinAnchored && maxDateTime.clone().subtract(1, unit).add(1, 'seconds').unix() !== minDateTime.unix()) {
+            continue;
+        }
+
+        let newMinDateTime = minDateTime.clone();
+        let newMaxDateTime = maxDateTime.clone();
+
+        for (let i = 0; i < Math.abs(scale); i++) {
+            if (scale > 0) {
+                newMinDateTime = newMaxDateTime.clone().add(1, 'seconds');
+
+                if (isMinTimeStartOfDay) {
+                    newMinDateTime.startOf('day');
+                }
+
+                newMaxDateTime = newMinDateTime.clone().add(1, unit);
+
+                if (isMinTimeStartOfDay && isMaxTimeEndOfDay) {
+                    newMaxDateTime.startOf('day');
+                }
+
+                newMaxDateTime.subtract(1, 'seconds');
+            } else {
+                newMaxDateTime = newMinDateTime.clone().subtract(1, 'seconds');
+                newMinDateTime = newMinDateTime.clone().subtract(1, unit);
+
+                if (isMinTimeStartOfDay) {
+                    newMinDateTime.startOf('day');
+                }
+            }
+        }
 
         return {
             minTime: newMinDateTime.unix(),
@@ -1229,11 +1297,11 @@ export function getShiftedDateRange(minTime: number, maxTime: number, scale: num
         };
     }
 
-    // check whether the date range matches one full month
-    if (minDateTime.clone().add(1, 'months').subtract(1, 'seconds').unix() === maxDateTime.unix() ||
-        maxDateTime.clone().subtract(1, 'months').add(1, 'seconds').unix() === minDateTime.unix()) {
-        const newMinDateTime = minDateTime.add(1 * scale, 'months');
-        const newMaxDateTime = maxDateTime.add(1 * scale, 'months');
+    // check whether the date range matches full days
+    if (isMinTimeStartOfDay && isMaxTimeEndOfDay) {
+        const days = maxDateTime.diff(minDateTime, 'days') + 1;
+        const newMinDateTime = minDateTime.add(days * scale, 'days').startOf('day');
+        const newMaxDateTime = newMinDateTime.clone().add(days, 'days').startOf('day').subtract(1, 'seconds');
 
         return {
             minTime: newMinDateTime.unix(),
@@ -1767,3 +1835,4 @@ export function getFiscalYearTimeRangeFromYear(year: number, fiscalYearStartValu
         maxUnixTime: fiscalYearEndUnixTime,
     };
 }
+

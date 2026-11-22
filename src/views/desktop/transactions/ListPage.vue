@@ -57,8 +57,12 @@
                                 <v-btn class="ms-3" color="default" variant="outlined"
                                        :disabled="loading || !canAddTransaction" @click="add()">
                                     {{ tt('Add') }}
-                                    <v-menu activator="parent" max-height="500" :open-on-hover="true" v-if="isTransactionFromAITextRecognitionEnabled() || isTransactionFromAIImageRecognitionEnabled() || (allTransactionTemplates && allTransactionTemplates.length)">
+                                    <v-menu activator="parent" max-height="500" :open-on-hover="true">
                                         <v-list>
+                                            <v-list-item key="AddMultipleTransactions"
+                                                         :title="tt('Add Multiple Transactions')"
+                                                         :prepend-icon="mdiTablePlus"
+                                                         @click="addMultiple"></v-list-item>
                                             <v-list-item key="AIClipboardTextRecognition"
                                                          :title="tt('AI Clipboard Text Recognition')"
                                                          :prepend-icon="mdiMagicStaff"
@@ -69,10 +73,11 @@
                                                          :prepend-icon="mdiMagicStaff"
                                                          v-if="isTransactionFromAIImageRecognitionEnabled()"
                                                          @click="addByRecognizingImage"></v-list-item>
+                                            <v-divider class="my-1" v-if="allNormalTransactionTemplates && allNormalTransactionTemplates.length > 0" />
                                             <v-list-item :key="template.id"
                                                          :title="template.name"
                                                          :prepend-icon="mdiTextBoxOutline"
-                                                         v-for="template in allTransactionTemplates"
+                                                         v-for="template in allNormalTransactionTemplates"
                                                          @click="add(template)"></v-list-item>
                                         </v-list>
                                     </v-menu>
@@ -122,12 +127,24 @@
                                 <div class="transaction-keyword-filter ms-2">
                                     <v-text-field autocomplete="off" density="compact" :disabled="loading"
                                                   :prepend-inner-icon="mdiMagnify"
-                                                  :append-inner-icon="searchKeyword !== query.keyword ? mdiCheck : undefined"
                                                   :placeholder="tt('Search transaction description')"
                                                   v-model="searchKeyword"
-                                                  @click:append-inner="changeKeywordFilter(searchKeyword)"
                                                   @keyup.enter="changeKeywordFilter(searchKeyword)"
-                                    />
+                                    >
+                                        <template #append-inner>
+                                            <v-tooltip :text="tt('Search')" v-if="searchKeyword !== query.keyword">
+                                                <template v-slot:activator="{ props }">
+                                                    <v-icon :icon="mdiCheck"
+                                                            :aria-label="tt('Search')"
+                                                            :disabled="loading"
+                                                            @click="changeKeywordFilter(searchKeyword)"
+                                                            @keydown.enter.stop.prevent="changeKeywordFilter(searchKeyword)"
+                                                            @keydown.space.stop.prevent="changeKeywordFilter(searchKeyword)"
+                                                            v-bind="props" />
+                                                </template>
+                                            </v-tooltip>
+                                        </template>
+                                    </v-text-field>
                                 </div>
                             </div>
                         </template>
@@ -204,7 +221,7 @@
                                             <div class="d-flex align-center cursor-pointer"
                                                  :class="{ 'readonly': loading, 'text-primary': query.dateType !== DateRange.ThisMonth.type }" v-bind="props">
                                                 <span>{{ tt('Time') }}</span>
-                                                <v-icon :icon="mdiMenuDown" />
+                                                <v-icon class="menu-toggle-icon" :icon="mdiMenuDown" />
                                             </div>
                                         </template>
                                         <v-list :selected="[query.dateType]">
@@ -240,7 +257,7 @@
                                             <div class="d-flex align-center"
                                                 :class="{ 'readonly': loading, 'cursor-pointer': query.type !== 1, 'text-primary': query.categoryIds }" v-bind="props">
                                                 <span>{{ queryCategoryName }}</span>
-                                                <v-icon :icon="mdiMenuDown" v-show="query.type !== 1" />
+                                                <v-icon class="menu-toggle-icon" :icon="mdiMenuDown" v-show="query.type !== 1" />
                                             </div>
                                         </template>
                                         <v-list :selected="[queryAllSelectedFilterCategoryIds]">
@@ -339,7 +356,7 @@
                                             <div class="d-flex align-center cursor-pointer"
                                                  :class="{ 'readonly': loading, 'text-primary': query.amountFilter }" v-bind="props">
                                                 <span>{{ tt('Amount') }}</span>
-                                                <v-icon :icon="mdiMenuDown" />
+                                                <v-icon class="menu-toggle-icon" :icon="mdiMenuDown" />
                                             </div>
                                         </template>
                                         <v-list :selected="[query.amountFilter.split(':')[0]]">
@@ -391,7 +408,7 @@
                                             <div class="d-flex align-center cursor-pointer"
                                                  :class="{ 'readonly': loading, 'text-primary': query.accountIds }" v-bind="props">
                                                 <span>{{ queryAccountName }}</span>
-                                                <v-icon :icon="mdiMenuDown" />
+                                                <v-icon class="menu-toggle-icon" :icon="mdiMenuDown" />
                                             </div>
                                         </template>
                                         <v-list :selected="[queryAllSelectedFilterAccountIds]">
@@ -446,7 +463,7 @@
                                             <div class="d-flex align-center cursor-pointer"
                                                  :class="{ 'readonly': loading, 'text-primary': query.tagFilter }" v-bind="props">
                                                 <span>{{ queryTagName }}</span>
-                                                <v-icon :icon="mdiMenuDown" />
+                                                <v-icon class="menu-toggle-icon" :icon="mdiMenuDown" />
                                             </div>
                                         </template>
                                         <v-list :selected="[queryAllSelectedFilterTagIds]">
@@ -603,6 +620,10 @@
                                                 v-if="!transaction.tagIds || !transaction.tagIds.length"/>
                                     </td>
                                     <td class="transaction-table-column-description text-truncate">
+                                        <v-icon class="transaction-picture-indicator" size="18" :icon="mdiImageOutline"
+                                                :aria-label="tt('Transaction Pictures')" role="img"
+                                                v-if="showPictureIndicatorInTransactionListPage && transaction.pictures?.length">
+                                        </v-icon>
                                         {{ transaction.comment }}
                                     </td>
                                 </tr>
@@ -680,8 +701,9 @@
                             @error="onShowDateRangeError" />
 
     <edit-dialog ref="editDialog" :type="TransactionEditPageType.Transaction" />
+    <batch-add-dialog ref="batchAddDialog" />
     <a-i-image-recognition-dialog ref="aiImageRecognitionDialog" />
-    <import-dialog ref="importDialog" :persistent="true" />
+    <import-dialog ref="importDialog" />
 
     <account-filter-settings-dialog type="transactionListCurrent"
                                     v-model:show="showFilterAccountDialog"
@@ -695,17 +717,13 @@
     <transaction-tag-filter-settings-dialog type="transactionListCurrent"
                                             v-model:show="showFilterTagDialog"
                                             @settings:change="changeMultipleTagsFilter" />
-
-    <confirm-dialog ref="confirmDialog"/>
-    <snack-bar ref="snackbar" />
 </template>
 
 <script setup lang="ts">
 import { VMenu } from 'vuetify/components/VMenu';
 import PaginationButtons from '@/components/desktop/PaginationButtons.vue';
-import ConfirmDialog from '@/components/desktop/ConfirmDialog.vue';
-import SnackBar from '@/components/desktop/SnackBar.vue';
 import EditDialog from './list/dialogs/EditDialog.vue';
+import BatchAddDialog from './list/dialogs/BatchAddDialog.vue';
 import AIImageRecognitionDialog from './list/dialogs/AIImageRecognitionDialog.vue';
 import ImportDialog from './import/ImportDialog.vue';
 import AccountFilterSettingsDialog from '@/views/desktop/common/dialogs/AccountFilterSettingsDialog.vue';
@@ -744,7 +762,6 @@ import {
 import { AmountFilterType } from '@/core/numeral.ts';
 import { ThemeType } from '@/core/theme.ts';
 import { TransactionType, TransactionAmountType } from '@/core/transaction.ts';
-import { TemplateType }  from '@/core/template.ts';
 
 import { DEFAULT_PAGE_COUNTS } from '@/consts/page.ts';
 
@@ -808,7 +825,9 @@ import {
     mdiArrowLeft,
     mdiArrowRight,
     mdiPound,
+    mdiImageOutline,
     mdiMagicStaff,
+    mdiTablePlus,
     mdiTextBoxOutline,
     mdiTextBoxEditOutline
 } from '@mdi/js';
@@ -829,9 +848,8 @@ interface TransactionListProps {
 
 const props = defineProps<TransactionListProps>();
 
-type ConfirmDialogType = InstanceType<typeof ConfirmDialog>;
-type SnackBarType = InstanceType<typeof SnackBar>;
 type EditDialogType = InstanceType<typeof EditDialog>;
+type BatchAddDialogType = InstanceType<typeof BatchAddDialog>;
 type AIImageRecognitionDialogType = InstanceType<typeof AIImageRecognitionDialog>;
 type ImportDialogType = InstanceType<typeof ImportDialog>;
 
@@ -859,6 +877,7 @@ const {
     showTotalAmountInTransactionListPage,
     totalAmountTypeInTransactionListPage,
     showTagInTransactionListPage,
+    showPictureIndicatorInTransactionListPage,
     allDateRanges,
     allAccounts,
     allAccountsMap,
@@ -919,9 +938,8 @@ const amountFilterMenu = useTemplateRef<VMenu>('amountFilterMenu');
 const accountFilterMenu = useTemplateRef<VMenu>('accountFilterMenu');
 const tagFilterMenu = useTemplateRef<VMenu>('tagFilterMenu');
 
-const confirmDialog = useTemplateRef<ConfirmDialogType>('confirmDialog');
-const snackbar = useTemplateRef<SnackBarType>('snackbar');
 const editDialog = useTemplateRef<EditDialogType>('editDialog');
+const batchAddDialog = useTemplateRef<BatchAddDialogType>('batchAddDialog');
 const aiImageRecognitionDialog = useTemplateRef<AIImageRecognitionDialogType>('aiImageRecognitionDialog');
 const importDialog = useTemplateRef<ImportDialogType>('importDialog');
 
@@ -944,13 +962,9 @@ const showFilterCategoryDialog = ref<boolean>(false);
 const showFilterTagDialog = ref<boolean>(false);
 
 const isDarkMode = computed<boolean>(() => theme.global.name.value === ThemeType.Dark);
+const allNormalTransactionTemplates = computed<TransactionTemplate[]>(() => transactionTemplatesStore.allVisibleNormalTemplates);
 const allPageCounts = computed<NameNumeralValue[]>(() => getTablePageOptions(DEFAULT_PAGE_COUNTS, undefined, false, true));
 const recentMonthDateRanges = computed<LocalizedRecentMonthDateRange[]>(() => getAllRecentMonthDateRanges(pageType.value === TransactionListPageType.List.type || pageType.value === TransactionListPageType.Gallery.type, true));
-
-const allTransactionTemplates = computed<TransactionTemplate[]>(() => {
-    const allTemplates = transactionTemplatesStore.allVisibleTemplates;
-    return allTemplates[TemplateType.Normal.type] || [];
-});
 
 const allowCategoryTypes = computed<string>(() => {
     if (TransactionType.Income <= query.value.type && query.value.type <= TransactionType.Transfer) {
@@ -1224,8 +1238,7 @@ function init(initProps: TransactionListProps): void {
     currentPage.value = 1;
     reload(false, true);
 
-    transactionTemplatesStore.loadAllTemplates({
-        templateType: TemplateType.Normal.type,
+    transactionTemplatesStore.loadAllNormalTemplates({
         force: false
     });
 }
@@ -1254,35 +1267,37 @@ function reload(force: boolean, init: boolean): void {
             const currentMonth = currentMonthMinDate.getGregorianCalendarMonth();
 
             return transactionsStore.loadMonthlyAllTransactions({
+                force: force,
                 year: currentYear,
                 month: currentMonth,
                 mustHavePictures: isGalleryMode,
-                withPictures: isGalleryMode,
+                withPictures: isGalleryMode || showPictureIndicatorInTransactionListPage.value,
                 autoExpand: true,
                 defaultCurrency: selectedAccountDefaultCurrency.value
             });
         } else {
             return transactionsStore.loadTransactions({
+                force: force,
                 reload: true,
                 count: countPerPage.value,
                 page: page,
                 mustHavePictures: isGalleryMode,
                 withCount: page <= 1,
-                withPictures: isGalleryMode,
+                withPictures: isGalleryMode || showPictureIndicatorInTransactionListPage.value,
                 autoExpand: true,
                 defaultCurrency: selectedAccountDefaultCurrency.value
             });
         }
     }).then(data => {
         loading.value = false;
-        currentPageTransactions.value = data && data.items && data.items.length ? data.items : [];
+        currentPageTransactions.value = data && data.result && data.result.items && data.result.items.length ? data.result.items : [];
 
         if (page <= 1) {
-            totalCount.value = data && data.totalCount ? data.totalCount : 1;
+            totalCount.value = data && data.result && data.result.totalCount ? data.result.totalCount : 1;
         }
 
         if (force) {
-            snackbar.value?.showMessage('Data has been updated');
+            desktopPageStore.addToast(data.isUpToDate ? 'Data is up to date' : 'Data has been updated');
         }
     }).catch(error => {
         loading.value = false;
@@ -1290,7 +1305,7 @@ function reload(force: boolean, init: boolean): void {
         totalCount.value = 1;
 
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
@@ -1586,7 +1601,7 @@ function changeAmountFilter(filterType: string): void {
             amountFilter += ':' + currentAmountFilterValue1.value;
         } else if (amountCount === 2) {
             if (currentAmountFilterValue2.value < currentAmountFilterValue1.value) {
-                snackbar.value?.showMessage('Incorrect amount range');
+                desktopPageStore.addToast('Incorrect amount range');
                 return;
             }
 
@@ -1630,13 +1645,42 @@ function add(template?: TransactionTemplate, autoRecognizeClipboardText?: string
         autoRecognizeClipboardText: autoRecognizeClipboardText
     }).then(result => {
         if (result && result.message) {
-            snackbar.value?.showMessage(result.message);
+            desktopPageStore.addToast(result.message);
         }
 
         reload(false, false);
     }).catch(error => {
         if (error) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
+        }
+    });
+}
+
+function addMultiple(): void {
+    const currentUnixTime = getCurrentUnixTime();
+    let newTransactionTime: number | undefined = undefined;
+
+    if (query.value.maxTime && query.value.minTime) {
+        if (query.value.maxTime < currentUnixTime) {
+            newTransactionTime = query.value.maxTime;
+        } else if (currentUnixTime < query.value.minTime) {
+            newTransactionTime = query.value.minTime;
+        }
+    }
+
+    batchAddDialog.value?.open({
+        time: newTransactionTime,
+        type: query.value.type,
+        categoryId: queryAllFilterCategoryIdsCount.value === 1 ? query.value.categoryIds : '',
+        accountId: queryAllFilterAccountIdsCount.value === 1 ? query.value.accountIds : '',
+        tagIds: objectFieldWithValueToArrayItem(queryAllFilterTagIds.value, true).join(',') || ''
+    }).then(changed => {
+        if (changed) {
+            reload(false, false);
+        }
+    }).catch(error => {
+        if (error && !error.processed) {
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
@@ -1674,13 +1718,13 @@ function addByRecognizingImage(): void {
             noTransactionDraft: true
         }).then(result => {
             if (result && result.message) {
-                snackbar.value?.showMessage(result.message);
+                desktopPageStore.addToast(result.message);
             }
 
             reload(false, false);
         }).catch(error => {
             if (error) {
-                snackbar.value?.showError(error);
+                desktopPageStore.addErrorToast(error);
             }
         });
     });
@@ -1691,7 +1735,7 @@ function importTransaction(): void {
         reload(false, false);
     }).catch(error => {
         if (error) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
@@ -1723,7 +1767,7 @@ function exportTransactions(fileExtension: string): void {
         exportingData.value = false;
 
         if (!error.processed) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
@@ -1734,13 +1778,13 @@ function show(transaction: Transaction): void {
         currentTransaction: transaction
     }).then(result => {
         if (result && result.message) {
-            snackbar.value?.showMessage(result.message);
+            desktopPageStore.addToast(result.message);
         }
 
         reload(false, false);
     }).catch(error => {
         if (error) {
-            snackbar.value?.showError(error);
+            desktopPageStore.addErrorToast(error);
         }
     });
 }
@@ -1805,7 +1849,7 @@ function scrollMenuToSelectedItem(menu: VMenu | null): void {
 }
 
 function onShowDateRangeError(message: string): void {
-    snackbar.value?.showError(message);
+    desktopPageStore.addErrorToast(message);
 }
 
 onBeforeRouteUpdate((to) => {
@@ -1924,6 +1968,12 @@ init(props);
             max-width: 100%;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+    }
+
+    .transaction-table-column-description {
+        > .transaction-picture-indicator {
+            vertical-align: text-bottom;
         }
     }
 }
